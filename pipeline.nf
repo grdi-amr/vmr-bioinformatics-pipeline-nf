@@ -17,7 +17,8 @@ params.num_threads = 1
 
 // Parameters for StarAMR
 params.species = "Escherichia coli"
-
+// Parameters to activate ectyper
+params.ectyper = false
 // Help
 params.help = false
 
@@ -39,7 +40,8 @@ def helpMessage() {
           --outDir          DIRECTORY to link results to.
           --num_threads     Number of threads to use in downstream processes, 
                             per sample.
-	  --species	    Species for starAMR samplesheet. 
+	  --species	    Species for starAMR samplesheet.
+          --ectyper         if used it will  serotype E.coly serotyping 
     
     """.stripIndent(true)
 }
@@ -67,54 +69,42 @@ log.info """\
 // Note: what happens if these files are not generated?, e.g., with
 // optional flag?
 
-process createSamplesheetHeader {
-    output:
-    path "samplesheet.csv", emit: samplesheetPath
-
-    script:
-    """
-    echo "sample,contigs,species" > samplesheet.csv
-    """
-}
-process createSamplesheet {
-    input:
-    tuple val(sample), path(contigs)
-    path samplesheetPath
-
-    output:
-    path samplesheetPath
-
-    script:
-    // Appending the sample, contigs, and species to the samplesheet
-    def row = "${sample},${contigs},${params.species}\n"
-    
-    // Append the row to the samplesheet using a shell command
-    """
-    echo "${row}" >> ${samplesheetPath}
-    """
-    
-}
 
 process runStarAMR {
-    publishDir "${params.outDir}/StarAMR"
+    label "STARAMR"
+    publishDir "${params.outDir}/$sample/STARAMR"
 
     input:
-    path samplesheet
+    tuple val(sample), path(contigs)
+    
 
     output:
-    path "results/staramr_output" 
+    tuple val(sample), path("out/results.xlsx")          , emit: results_xlsx
+    tuple val(sample), path("out/detailed_summary.tsv")           , emit: summary_tsv
+    tuple val(sample), path("out/resfinder.tsv")         , emit: resfinder_tsv
+    tuple val(sample), path("out/plasmidfinder.tsv")     , emit: plasmidfinder_tsv
+    tuple val(sample), path("out/mlst.tsv")              , emit: mlst_tsv
+    tuple val(sample), path("out/settings.txt")          , emit: settings_txt
+    tuple val(sample), path("out/pointfinder.tsv")       , emit: pointfinder_tsv, optional: true 
 
     script:
     """
-    /Drives/O/USERS/gwajnber/nextflow run phac-nml/staramrnf -profile singularity \
-        --input $samplesheet \
-        --outdir staramr_output \
-        --max_memory '20 GB' \
-        --pid_threshold 99 \
-        --max_time '10.h'
+    staramr search -o out  $contigs  
     """
 }
+process run_ectyper {
+    label "ECTYPER"
+    publishDir "${params.outDir}/$sample/ECTYPER"
 
+    input:
+    tuple val(sample), path(contigs)
+    output:
+    tuple val(sample), path("out/output.tsv"), emit: ectyper_tsv    
+    script:
+    """
+    ectyper -i $contigs -o out
+    """
+}
 process load_RGI_database { 
     label "RGI" 
 
@@ -262,19 +252,19 @@ process create_report {
 
 workflow {
     
-    headerChannel = createSamplesheetHeader()
     // Get the Contigs into a channel
     CONTIGS = Channel
                 .fromPath(params.contigs)
                 .map { file -> tuple(file.baseName, file) }
 
-   // Run the samplesheet creation process
-    createSamplesheet(CONTIGS, headerChannel)
+    if ( params.ectyper == true) {
+       run_ectyper(CONTIGS)
+    }
     
    // Run mob_recon on the contigs.
     MOB_RESULTS = run_mobSuite(CONTIGS)
     // Run star_amr
-    runStarAMR(createSamplesheet.out)	    
+    runStarAMR(CONTIGS)	    
     // Get the CARD Json
     JSON = Channel.fromPath(params.card_json)
     // Load RGI database locally.
