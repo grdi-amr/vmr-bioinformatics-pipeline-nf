@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MOB-RGI-NF
 
 A NextFlow pipeline to identify antimicrobial genes and plasmids from genomic
@@ -131,3 +132,6 @@ Show your appreciation to those who have contributed to the project.
 ## License
 For open source projects, say how it is licensed.
 
+=======
+# vmr-bioinformatics-pipeline
+>>>>>>> 8ba31a4a7f49c970d128063b5c48fff70a063d68
