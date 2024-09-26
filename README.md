@@ -1,33 +1,21 @@
 <<<<<<< HEAD
-# MOB-RGI-NF
+# VMR-BIOINFORMATICS-PIPELINE-NF
 
-A NextFlow pipeline to identify antimicrobial genes and plasmids from genomic
-sequence data
+A nextflow pipeline for bioinformatics analysis from the GRDI-AMR2 data.
 
 
-## Introduction
 
-Plasmids are mobile genetic elements, and are often significant carriers of
-antimicrobial resistance genes. MOB-suite is a tool that is used to
-reconstruct and type plasmid sequences from whole genome sequence data. However,
-it does not identify AMR elements on identified plasmid sequences. The
-Resistance Gene Identifier (RGI) is a suite of tools that uses the Comprehensive
-Antimicrobial Database (CARD) to identify AMR determinants from whole genome
-sequence data. This pipeline serves as the union of these two tools, and
-therefore allows for the identification of AMR determinants present on mobile
-genetic elements from a given set of whole genome sequence data.
 
 ## Overview
 
 The nextflow script `download_databases.nf` is used to download the databases
 used by RGI and MOB-suite (if needed).
 
-The nextflow script `pipeline.nf` runs both tools on a provided set of
-sequences. Both RGI and MOB-suite output their results in the form of tabular
+The nextflow script `pipeline.nf` runs starAMR, RGI, Mobsuite and Abricate. Both RGI and MOB-suite output their results in the form of tabular
 files. These results are merged, associating each detected AMR determinant with
 MOB-suite's results. This enables the user to identify if the AMR determinants
 are present on the chromosome, or on a plasmid. If multiple samples are passed
-to the program, the results will be collated into a single table.
+to the program, the results will be collated into a single table.  StarAMR will identify MLST
 
 
 ## Installation
@@ -38,8 +26,9 @@ Dependencies:
 * If using conda profile: 
     - Conda
     - Mamba
-* If using docker profile: 
+* If using docker/singularity profile: 
     - Docker
+    - Singularity
 
 ## Usage
 
@@ -95,6 +84,7 @@ very first run will take some time as the proper containers are downloaded.
 ```bash
 nextflow run pipeline.nf \
     -profile [conda|docker] \
+    --species "species" \  default "Escherichia coli"
     --contigs "dir/to/sequences/*.fasta"
 ```
 
@@ -107,18 +97,7 @@ path to the card.json file
 The results will be collected in the directory `results` in the project
 directory by default. This can be changed with the option `--outDir`.
 
-#### Detecting only AMR on plasmids
 
-By default, MOB-RGI-NF will run RGI on all the contigs in a provided fasta file.
-This means it will detect AMR determinants present on the chromosome, as well as
-those on plasmids. Since RGI and MOB-suite can be run separately, the pipeline
-will use both tools in parallel, and merge the results at the end. If you are
-only interested in AMR determinants on plasmids, the option `--plasmids_only`
-can be supplied. This will run RGI only on contigs determined by MOB-suite to be
-from plasmids, and will significantly decrease the time it takes to run RGI.
-However, it means that RGI cannot be run parallel to MOB-suite, and so the
-actual time to completion of the pipeline may not actually be shorter, unless
-many samples are being processed at the same time.
 
 ## Visuals
 Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
