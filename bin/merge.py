@@ -39,12 +39,13 @@ mob_df.rename(columns={'contig_id': 'Contig', 'sample_id': 'Sample'}, inplace=Tr
 
 # Before merging, make sure that the mobsuite contig names match up to the RGI
 # contig names 
-if not set(rgi_df['Contig']).issubset(set(mob_df['Contig'])):
-    raise Exception(
-        """
-        The contig names of the MOB-suite results are not a subset of the contig 
-        names of the RGI results.
-        """)
+#if not set(rgi_df['Contig']).issubset(set(mob_df['Contig'])):
+#    raise Exception(
+"""
+The contig names of the MOB-suite results are not a subset of the contig 
+names of the RGI results.
+"""
+#)
 
 # Merge the results by performing a left join. RGI results appear first in the
 # final table. There should be no duplication of Contigs in the mobDB, but

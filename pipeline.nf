@@ -5,6 +5,7 @@ params.contigs = ""
 params.mobDB = "$workDir/databases/mobDB"
 params.card_json = "$workDir/databases/card.json"
 
+
 // Full RGI or on plasmids only?
 params.plasmids_only = false
 
@@ -13,6 +14,9 @@ params.outDir = "$launchDir/results"
 
 // Process parameters
 params.num_threads = 1
+
+// Parameters for StarAMR
+params.species = "Escherichia coli"
 
 // Help
 params.help = false
@@ -34,7 +38,8 @@ def helpMessage() {
                             ignoring any chromosomal AMR determinants.
           --outDir          DIRECTORY to link results to.
           --num_threads     Number of threads to use in downstream processes, 
-                            per sample. 
+                            per sample.
+	  --species	    Species for starAMR samplesheet. 
     
     """.stripIndent(true)
 }
@@ -61,6 +66,54 @@ log.info """\
 
 // Note: what happens if these files are not generated?, e.g., with
 // optional flag?
+
+process createSamplesheetHeader {
+    output:
+    path "samplesheet.csv", emit: samplesheetPath
+
+    script:
+    """
+    echo "sample,contigs,species" > samplesheet.csv
+    """
+}
+process createSamplesheet {
+    input:
+    tuple val(sample), path(contigs)
+    path samplesheetPath
+
+    output:
+    path samplesheetPath
+
+    script:
+    // Appending the sample, contigs, and species to the samplesheet
+    def row = "${sample},${contigs},${params.species}\n"
+    
+    // Append the row to the samplesheet using a shell command
+    """
+    echo "${row}" >> ${samplesheetPath}
+    """
+    
+}
+
+process runStarAMR {
+    publishDir "${params.outDir}/StarAMR"
+
+    input:
+    path samplesheet
+
+    output:
+    path "results/staramr_output" 
+
+    script:
+    """
+    /Drives/O/USERS/gwajnber/nextflow run phac-nml/staramrnf -profile singularity \
+        --input $samplesheet \
+        --outdir staramr_output \
+        --max_memory '20 GB' \
+        --pid_threshold 99 \
+        --max_time '10.h'
+    """
+}
 
 process load_RGI_database { 
     label "RGI" 
@@ -151,7 +204,7 @@ process run_mobSuite {
     mob_recon \
       --infile $contigs \
       --outdir mobSuite \
-      --num_threads ${task.cpus} \
+      --num_threads 1 \
       --database_directory $params.mobDB \
       --force 
 
@@ -208,15 +261,20 @@ process create_report {
 }
 
 workflow {
-
+    
+    headerChannel = createSamplesheetHeader()
     // Get the Contigs into a channel
     CONTIGS = Channel
                 .fromPath(params.contigs)
                 .map { file -> tuple(file.baseName, file) }
 
-    // Run mob_recon on the contigs.
-    MOB_RESULTS = run_mobSuite(CONTIGS)
+   // Run the samplesheet creation process
+    createSamplesheet(CONTIGS, headerChannel)
     
+   // Run mob_recon on the contigs.
+    MOB_RESULTS = run_mobSuite(CONTIGS)
+    // Run star_amr
+    runStarAMR(createSamplesheet.out)	    
     // Get the CARD Json
     JSON = Channel.fromPath(params.card_json)
     // Load RGI database locally.

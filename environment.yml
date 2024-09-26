@@ -1,0 +1,10 @@
+name: mob-rgi-nf
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - mob_suite
+  - rgi
+  - shovill
+  - samtools

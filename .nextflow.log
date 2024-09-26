@@ -1,0 +1,89 @@
+Jul-15 10:36:30.932 [main] DEBUG nextflow.cli.Launcher - $> nextflow run download_databases.nf -profile singularity --download_all -c nextflow_slurm.config
+Jul-15 10:36:31.051 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 23.04.3
+Jul-15 10:36:31.075 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/Drives/O/USERS/gwajnber/.nextflow/plugins; core-plugins: nf-amazon@1.16.2,nf-azure@1.0.1,nf-codecommit@0.1.4,nf-console@1.0.5,nf-ga4gh@1.0.5,nf-google@1.7.3,nf-tower@1.5.12,nf-wave@0.8.4
+Jul-15 10:36:31.090 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+Jul-15 10:36:31.092 [main] INFO  org.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+Jul-15 10:36:31.096 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.4.1 in 'deployment' mode
+Jul-15 10:36:31.107 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+Jul-15 10:36:31.123 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /Drives/O/USERS/gwajnber/mob-rgi-nf/nextflow.config
+Jul-15 10:36:31.125 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /Drives/O/USERS/gwajnber/mob-rgi-nf/nextflow_slurm.config
+Jul-15 10:36:31.126 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Drives/O/USERS/gwajnber/mob-rgi-nf/nextflow.config
+Jul-15 10:36:31.126 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /Drives/O/USERS/gwajnber/mob-rgi-nf/nextflow_slurm.config
+Jul-15 10:36:31.150 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `singularity`
+Jul-15 10:36:31.839 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `singularity`
+Jul-15 10:36:32.040 [main] DEBUG nextflow.config.ConfigBuilder - Available config profiles: [conda, singularity, docker]
+Jul-15 10:36:32.080 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 by global default
+Jul-15 10:36:32.104 [main] INFO  nextflow.cli.CmdRun - Launching `download_databases.nf` [gigantic_poitras] DSL2 - revision: ab60c8e560
+Jul-15 10:36:32.105 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+Jul-15 10:36:32.105 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+Jul-15 10:36:32.118 [main] DEBUG nextflow.secret.LocalSecretsProvider - Secrets store: /Drives/O/USERS/gwajnber/.nextflow/secrets/store.json
+Jul-15 10:36:32.121 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@1f53481b] - activable => nextflow.secret.LocalSecretsProvider@1f53481b
+Jul-15 10:36:32.191 [main] DEBUG nextflow.Session - Session UUID: 9091d486-5439-4115-8cab-602a51adbe69
+Jul-15 10:36:32.192 [main] DEBUG nextflow.Session - Run name: gigantic_poitras
+Jul-15 10:36:32.193 [main] DEBUG nextflow.Session - Executor pool size: 128
+Jul-15 10:36:32.206 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=384; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Jul-15 10:36:32.249 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 23.04.3 build 5875
+  Created: 11-08-2023 18:37 UTC (13:37 CDT)
+  System: Linux 5.4.174-1.el7.elrepo.x86_64
+  Runtime: Groovy 3.0.16 on OpenJDK 64-Bit Server VM 17.0.6+10
+  Encoding: UTF-8 (ANSI_X3.4-1968)
+  Process: 97462@waffles-f-1.cscscience.ca [10.10.20.54]
+  CPUs: 128 - Mem: 1007.7 GB (18.8 GB) - Swap: 0 (0)
+Jul-15 10:36:32.308 [main] DEBUG nextflow.Session - Work-dir: /Drives/O/USERS/gwajnber/mob-rgi-nf/work [nfs]
+Jul-15 10:36:32.330 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+Jul-15 10:36:32.342 [main] DEBUG nextflow.Session - Observer factory: DefaultObserverFactory
+Jul-15 10:36:32.375 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+Jul-15 10:36:32.389 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 129; maxThreads: 1000
+Jul-15 10:36:32.520 [main] DEBUG nextflow.Session - Session start
+Jul-15 10:36:33.045 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Jul-15 10:36:33.065 [main] INFO  nextflow.Nextflow - 
+
+Download Databases
+-------------------
+MOB-suite databases: true
+CARD json: true
+
+
+Jul-15 10:36:33.096 [main] INFO  nextflow.script.BaseScript - Downloading CARD json file, please wait
+Jul-15 10:36:33.147 [main] DEBUG nextflow.script.ProcessConfig - Config settings `withLabel:RGI` matches labels `RGI` for process with name download_CARD_WF:download_CARD_json
+Jul-15 10:36:33.165 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: slurm
+Jul-15 10:36:33.165 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'slurm'
+Jul-15 10:36:33.179 [main] DEBUG nextflow.executor.Executor - [warm up] executor > slurm
+Jul-15 10:36:33.186 [main] DEBUG n.processor.TaskPollingMonitor - Creating task monitor for executor 'slurm' > capacity: 2000; pollInterval: 5s; dumpInterval: 5m 
+Jul-15 10:36:33.189 [main] DEBUG n.processor.TaskPollingMonitor - Creating submit rate limit of 10 submissions per 1 seconds
+Jul-15 10:36:33.194 [main] DEBUG n.executor.AbstractGridExecutor - Creating executor 'slurm' > queue-stat-interval: 1m
+Jul-15 10:36:33.282 [main] INFO  nextflow.script.BaseScript - Downloading MOB-suite databases, please wait
+Jul-15 10:36:33.284 [main] DEBUG nextflow.script.ProcessConfig - Config settings `withLabel:MOB` matches labels `MOB` for process with name download_MOB_WF:download_MOB_database
+Jul-15 10:36:33.285 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: slurm
+Jul-15 10:36:33.285 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'slurm'
+Jul-15 10:36:33.291 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: download_CARD_WF:download_CARD_json, download_CARD_json, download_MOB_database, download_MOB_WF:download_MOB_database
+Jul-15 10:36:33.291 [main] DEBUG nextflow.Session - Igniting dataflow network (2)
+Jul-15 10:36:33.292 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > download_CARD_WF:download_CARD_json
+Jul-15 10:36:33.293 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > download_MOB_WF:download_MOB_database
+Jul-15 10:36:33.293 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+Jul-15 10:36:33.293 [main] DEBUG nextflow.Session - Session await
+Jul-15 10:36:33.387 [Actor Thread 9] WARN  nextflow.container.SingularityCache - Singularity cache directory has not been defined -- Remote image will be stored in the path: /Drives/O/USERS/gwajnber/mob-rgi-nf/work/singularity -- Use the environment variable NXF_SINGULARITY_CACHEDIR to specify a different location
+Jul-15 10:36:33.388 [Actor Thread 9] INFO  nextflow.container.SingularityCache - Pulling Singularity image docker://quay.io/biocontainers/mob_suite:3.1.4--pyhdfd78af_0 [cache /Drives/O/USERS/gwajnber/mob-rgi-nf/work/singularity/quay.io-biocontainers-mob_suite-3.1.4--pyhdfd78af_0.img]
+Jul-15 10:36:33.389 [Actor Thread 10] INFO  nextflow.container.SingularityCache - Pulling Singularity image docker://quay.io/biocontainers/rgi:6.0.3--pyha8f3691_0 [cache /Drives/O/USERS/gwajnber/mob-rgi-nf/work/singularity/quay.io-biocontainers-rgi-6.0.3--pyha8f3691_0.img]
+Jul-15 10:36:45.296 [Actor Thread 9] DEBUG nextflow.container.SingularityCache - Singularity pull complete image=docker://quay.io/biocontainers/mob_suite:3.1.4--pyhdfd78af_0 path=/Drives/O/USERS/gwajnber/mob-rgi-nf/work/singularity/quay.io-biocontainers-mob_suite-3.1.4--pyhdfd78af_0.img
+Jul-15 10:36:45.492 [Task submitter] DEBUG nextflow.executor.GridTaskHandler - [SLURM] submitted process download_MOB_WF:download_MOB_database > jobId: 37143187; workDir: /Drives/O/USERS/gwajnber/mob-rgi-nf/work/99/f6e6fb694fe2d98d69a12792d5ea5b
+Jul-15 10:36:45.492 [Task submitter] INFO  nextflow.Session - [99/f6e6fb] Submitted process > download_MOB_WF:download_MOB_database
+Jul-15 10:38:56.308 [Actor Thread 10] DEBUG nextflow.container.SingularityCache - Singularity pull complete image=docker://quay.io/biocontainers/rgi:6.0.3--pyha8f3691_0 path=/Drives/O/USERS/gwajnber/mob-rgi-nf/work/singularity/quay.io-biocontainers-rgi-6.0.3--pyha8f3691_0.img
+Jul-15 10:38:56.376 [Task submitter] DEBUG nextflow.executor.GridTaskHandler - [SLURM] submitted process download_CARD_WF:download_CARD_json > jobId: 37143215; workDir: /Drives/O/USERS/gwajnber/mob-rgi-nf/work/cb/7d1a7a63ec200a3fe1f88e05edbff2
+Jul-15 10:38:56.376 [Task submitter] INFO  nextflow.Session - [cb/7d1a7a] Submitted process > download_CARD_WF:download_CARD_json
+Jul-15 10:40:58.222 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[jobId: 37143215; id: 1; name: download_CARD_WF:download_CARD_json; status: COMPLETED; exit: 0; error: -; workDir: /Drives/O/USERS/gwajnber/mob-rgi-nf/work/cb/7d1a7a63ec200a3fe1f88e05edbff2 started: 1721057968208; exited: 2024-07-15T15:40:24.33916Z; ]
+Jul-15 10:40:58.251 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'PublishDir' minSize=10; maxSize=384; workQueue=LinkedBlockingQueue[10000]; allowCoreThreadTimeout=false
+Jul-15 10:41:38.218 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor slurm > tasks to be completed: 1 -- submitted tasks are shown below
+~> TaskHandler[jobId: 37143187; id: 2; name: download_MOB_WF:download_MOB_database; status: RUNNING; exit: -; error: -; workDir: /Drives/O/USERS/gwajnber/mob-rgi-nf/work/99/f6e6fb694fe2d98d69a12792d5ea5b started: 1721057808207; exited: -; ]
+Jul-15 10:46:38.247 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor slurm > tasks to be completed: 1 -- submitted tasks are shown below
+~> TaskHandler[jobId: 37143187; id: 2; name: download_MOB_WF:download_MOB_database; status: RUNNING; exit: -; error: -; workDir: /Drives/O/USERS/gwajnber/mob-rgi-nf/work/99/f6e6fb694fe2d98d69a12792d5ea5b started: 1721057808207; exited: -; ]
+Jul-15 10:51:08.256 [Task monitor] DEBUG nextflow.file.FileHelper - NFS path (true): /Drives/O/USERS/gwajnber/mob-rgi-nf/work
+Jul-15 10:51:08.281 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[jobId: 37143187; id: 2; name: download_MOB_WF:download_MOB_database; status: COMPLETED; exit: 0; error: -; workDir: /Drives/O/USERS/gwajnber/mob-rgi-nf/work/99/f6e6fb694fe2d98d69a12792d5ea5b started: 1721057808207; exited: 2024-07-15T15:50:39.523127Z; ]
+Jul-15 10:51:08.308 [main] DEBUG nextflow.Session - Session await > all processes finished
+Jul-15 10:51:08.311 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Jul-15 10:51:08.333 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'PublishDir' shutdown completed (hard=false)
+Jul-15 10:51:08.343 [main] DEBUG nextflow.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=2; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=15m 50s; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=2; peakCpus=2; peakMemory=0; ]
+Jul-15 10:51:08.413 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+Jul-15 10:51:08.452 [main] DEBUG nextflow.util.ThreadPoolManager - Thread pool 'FileTransfer' shutdown completed (hard=false)
+Jul-15 10:51:08.452 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

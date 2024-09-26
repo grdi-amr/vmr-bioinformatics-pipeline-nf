@@ -1,0 +1,7 @@
+2024-07-11 17:12:10	25.7s	agitated_laplace	ERR	ab60c8e560c574e2873c5858e99c2218	05f89dd6-4b48-4cce-9ef3-3d7a74f94f39	nextflow run download_databases.nf -profile conda --download_all -c nextflow_slurm.config
+2024-07-12 13:52:09	2m 59s	nauseous_hawking	ERR	ab60c8e560c574e2873c5858e99c2218	d03ec69f-8624-4a0c-8ff8-b54537173787	nextflow run download_databases.nf -profile conda --download_all -c nextflow_slurm.config
+2024-07-12 16:20:04	20m 3s	jovial_mandelbrot	ERR	ab60c8e560c574e2873c5858e99c2218	2d8789dd-a361-49fc-9387-d8b44e41b00d	nextflow run download_databases.nf -profile conda --download_all -c nextflow_slurm.config
+2024-07-12 17:21:38	18.9s	golden_shannon	ERR	ab60c8e560c574e2873c5858e99c2218	933f0a15-e15f-46d5-80cd-bbe49532fa46	nextflow run download_databases.nf -profile conda --download_all -c nextflow_slurm.config
+2024-07-15 10:05:41	2m 12s	distracted_stone	ERR	ab60c8e560c574e2873c5858e99c2218	7fec7f7c-e7bf-4a47-92f0-983201310d7f	nextflow run download_databases.nf -profile singularity --download_all -c nextflow_slurm.config
+2024-07-15 10:15:11	48.4s	naughty_mahavira	ERR	ab60c8e560c574e2873c5858e99c2218	778cfe50-36ec-4e2e-8b2e-5ce54b0eb4af	nextflow run download_databases.nf -profile singularity --download_all -c nextflow_slurm.config
+2024-07-15 10:36:32	14m 36s	gigantic_poitras	OK	ab60c8e560c574e2873c5858e99c2218	9091d486-5439-4115-8cab-602a51adbe69	nextflow run download_databases.nf -profile singularity --download_all -c nextflow_slurm.config
