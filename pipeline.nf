@@ -19,6 +19,8 @@ params.num_threads = 1
 params.species = "Escherichia coli"
 // Parameters to activate ectyper
 params.ectyper = false
+// Parameters to activate sistr
+params.sistr = false
 // Help
 params.help = false
 
@@ -41,8 +43,9 @@ def helpMessage() {
           --num_threads     Number of threads to use in downstream processes, 
                             per sample.
 	  --species	    Species for starAMR samplesheet.
-          --ectyper         if used it will  serotype E.coly serotyping 
-    
+          --ectyper         if used it will  serotype E.coly .Default=false 
+          --sistr           if used it will serotype Salmonella.If used make sure to 
+                            use parameter 'species'. Default=false
     """.stripIndent(true)
 }
 
@@ -58,10 +61,13 @@ log.info """\
     ===================================
     Profile     : ${workflow.profile}
     Contigs     : ${params.contigs}
+    Species     : ${params.species}
+    Sistr       : ${params.sistr}
+    Ectyper     : ${params.ectyper}
     mobDB       : ${params.mobDB}
     card.json   : ${params.card_json}
     outDir      : ${params.outDir} 
-
+   
     PlasmidsOnly? ${params.plasmids_only}
     """
    .stripIndent(true)
@@ -80,7 +86,7 @@ process runStarAMR {
 
     output:
     tuple val(sample), path("out/results.xlsx")          , emit: results_xlsx
-    tuple val(sample), path("out/detailed_summary.tsv")           , emit: summary_tsv
+    tuple val(sample), path("out/detailed_summary.tsv")  , emit: summary_tsv
     tuple val(sample), path("out/resfinder.tsv")         , emit: resfinder_tsv
     tuple val(sample), path("out/plasmidfinder.tsv")     , emit: plasmidfinder_tsv
     tuple val(sample), path("out/mlst.tsv")              , emit: mlst_tsv
@@ -104,6 +110,34 @@ process run_ectyper {
     """
     ectyper -i $contigs -o out
     """
+}
+process run_sistr {
+    label "SISTR"
+    publishDir "${params.outDir}/$sample/SISTR"
+
+    input:
+    tuple val(sample), path(contigs)
+    output:
+    tuple val(sample), path("sistr.tab"), emit: sistr_tsv
+    script:
+    """
+    sistr -i $contigs "$params.species" -o sistr -f tab
+    """
+}
+process run_abricate {
+    label "ABRICATE"
+    publishDir "${params.outDir}/$sample/ABRICATE"
+
+    input:
+    tuple val(sample), path(contigs)
+    output:
+    tuple val(sample), path("amr.vfdb.results.tsv"), emit: vfdb_tsv
+    script:
+    """
+    abricate $contigs --db vfdb > amr.vfdb.results.tsv
+    """
+
+
 }
 process load_RGI_database { 
     label "RGI" 
@@ -260,11 +294,16 @@ workflow {
     if ( params.ectyper == true) {
        run_ectyper(CONTIGS)
     }
+    if (params.sistr == true) {
+       run_sistr(CONTIGS) 
+    }
     
    // Run mob_recon on the contigs.
     MOB_RESULTS = run_mobSuite(CONTIGS)
     // Run star_amr
-    runStarAMR(CONTIGS)	    
+    runStarAMR(CONTIGS)
+    // Run Abricate
+    run_abricate(CONTIGS)	    
     // Get the CARD Json
     JSON = Channel.fromPath(params.card_json)
     // Load RGI database locally.
@@ -296,10 +335,10 @@ workflow {
     CAT_TAB = MERGE_TAB.out
                 .collectFile(keepHeader: true, 
                              skip: 1, 
-                             name: 'All_samples.csv', 
+                             name: 'Mob_rgi_contig_results.csv', 
                              storeDir: params.outDir )
 
     // Create report
-    create_report(CAT_TAB)
+//    create_report(CAT_TAB)
  }
 
