@@ -15,7 +15,9 @@ The nextflow script `pipeline.nf` runs starAMR, RGI, Mobsuite and Abricate. Both
 files. These results are merged, associating each detected AMR determinant with
 MOB-suite's results. This enables the user to identify if the AMR determinants
 are present on the chromosome, or on a plasmid. If multiple samples are passed
-to the program, the results will be collated into a single table.  StarAMR will identify MLST
+to the program, the results will be collated into a single table.  StarAMR will identify MLST and Resfinder genes.
+Sistr and Ectyper can be used depending on the species isolated in the project to perform the serotyping.
+Abricate is configured to search into the VFDB database to retrieve virulence genes.
 
 
 ## Installation
@@ -32,7 +34,10 @@ Dependencies:
 
 ## Usage
 
-Clone this pipeline into a working directory. 
+Clone this pipeline into a working directory.
+### Slurm compatibility
+
+The pipeline is compatible with slurm, that is needed when used at PHAC/Waffles server. Just add the "-c path/to/vmr-bioinformatics-pipeline-nf/nextflow_slurm.config"" parameter.
 
 ### Download databases
 
@@ -44,7 +49,7 @@ MOB-suite databases, `--download_card_json` to download the CARD json file, or
 
 ```bash
 nextflow run download_databases.nf \
-    -profile [conda|docker] \
+    -profile [conda|docker|singularity] \
     --download_all
 ```
 
@@ -58,7 +63,7 @@ pipeline.
 
 ```bash
 nextflow run download_databases.nf \
-    -profile [conda|docker] \
+    -profile [conda|docker|singularity] \
     --download_all \
     --mobDB "/path/to/mobDB/directory" \
     --card_json "/path/to/card/directory"
@@ -83,9 +88,11 @@ very first run will take some time as the proper containers are downloaded.
 
 ```bash
 nextflow run pipeline.nf \
-    -profile [conda|docker] \
+    -profile [conda|docker|singularity] \
     --species "species" \  default "Escherichia coli"
     --contigs "dir/to/sequences/*.fasta"
+    --sistr [true|false] \ default: false
+    --ectyper [true|false] \ default: false
 ```
 
 This command assumes that the databases have first been downloaded into the
