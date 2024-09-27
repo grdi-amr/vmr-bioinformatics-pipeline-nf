@@ -4,7 +4,7 @@ params.contigs = ""
 // Database Locations
 params.mobDB = "$workDir/databases/mobDB"
 params.card_json = "$workDir/databases/card.json"
-
+params.virulencefinderDB = "$workDir/databases/virulencefinder_db"
 
 // Full RGI or on plasmids only?
 params.plasmids_only = false
@@ -21,6 +21,9 @@ params.species = "Escherichia coli"
 params.ectyper = false
 // Parameters to activate sistr
 params.sistr = false
+// Parameters for vfinder database 
+params.vfinder = ""
+
 // Help
 params.help = false
 
@@ -46,6 +49,9 @@ def helpMessage() {
           --ectyper         if used it will  serotype E.coly .Default=false 
           --sistr           if used it will serotype Salmonella.If used make sure to 
                             use parameter 'species'. Default=false
+          --vfinder         Use one or more of vfinder available databases: listeria, 
+                            s.aureus_exoenzyme, s.aureus_hostimm, s.aureus_toxin, 
+                            stx, virulence_ecoli, virulence_ent, virulence_entfm.
     """.stripIndent(true)
 }
 
@@ -65,6 +71,7 @@ log.info """\
     Sistr       : ${params.sistr}
     Ectyper     : ${params.ectyper}
     mobDB       : ${params.mobDB}
+    vfDB        : ${params.virulencefinderDB}
     card.json   : ${params.card_json}
     outDir      : ${params.outDir} 
    
@@ -135,6 +142,24 @@ process run_abricate {
     script:
     """
     abricate $contigs --db vfdb > amr.vfdb.results.tsv
+    """
+
+
+}
+
+process run_virulencefinder {
+    label "VFINDER"
+    publishDir "${params.outDir}/$sample/VIRULENCEFINDER"
+
+    input:
+    tuple val(sample), path(contigs)
+    output:
+    tuple val(sample), path("out/"), emit: vfdb_tsv
+    
+    script:
+    """
+    mkdir out
+    virulencefinder.py -i "$contigs" -o "out" -d "$params.vfinder" -p $params.virulencefinderDB
     """
 
 
@@ -296,6 +321,9 @@ workflow {
     }
     if (params.sistr == true) {
        run_sistr(CONTIGS) 
+    }
+    if (params.vfinder){
+    run_virulencefinder(CONTIGS)
     }
     
    // Run mob_recon on the contigs.
