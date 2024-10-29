@@ -154,7 +154,7 @@ process run_virulencefinder {
     input:
     tuple val(sample), path(contigs)
     output:
-    tuple val(sample), path("out/"), emit: vfdb_tsv
+    tuple val(sample), path("out/"), emit: vf_tsv
     
     script:
     """
@@ -283,6 +283,22 @@ process merge_tables {
 
     """
 }
+process json_generator {
+    label "RGI"
+    publishDir "${params.outDir}", mode: 'copy'
+    cache 'none'
+
+    // This process runs after all samples are processed, taking only the directory as an argument
+    input:
+    path tables
+
+    output:
+    path("results_summary.json"), emit: json_out
+    script:
+    """
+    python $projectDir/bin/json_generator.py ${params.outDir}
+    """
+}
 
 process create_report {
     label "RGI"
@@ -359,13 +375,16 @@ workflow {
     MERGE_TAB = merge_tables(TABLES)
 
     // This operation concatenates the CSV files, but leaves just one header at 
-    // the top 
+    // the top
+ 
     CAT_TAB = MERGE_TAB.out
                 .collectFile(keepHeader: true, 
                              skip: 1, 
                              name: 'Mob_rgi_contig_results.csv', 
                              storeDir: params.outDir )
 
+    TOTAL_JSON = json_generator(CAT_TAB)
+   
     // Create report
 //    create_report(CAT_TAB)
  }
