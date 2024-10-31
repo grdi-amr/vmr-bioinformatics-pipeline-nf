@@ -326,28 +326,32 @@ process create_report {
 }
 
 workflow {
-    
+    def ECTYPER_RESULTS = Channel.empty()
+    def SISTR_RESULTS = Channel.empty()
+    def VFINDER_RESULTS = Channel.empty()    
     // Get the Contigs into a channel
     CONTIGS = Channel
                 .fromPath(params.contigs)
                 .map { file -> tuple(file.baseName, file) }
 
     if ( params.ectyper == true) {
-       run_ectyper(CONTIGS)
+       ECTYPER_RESULTS = run_ectyper(CONTIGS)
     }
+       
+    
     if (params.sistr == true) {
-       run_sistr(CONTIGS) 
+       SISTR_RESULTS = run_sistr(CONTIGS) 
     }
     if (params.vfinder){
-    run_virulencefinder(CONTIGS)
+    VFINDER_RESULTS = run_virulencefinder(CONTIGS)
     }
     
    // Run mob_recon on the contigs.
     MOB_RESULTS = run_mobSuite(CONTIGS)
     // Run star_amr
-    runStarAMR(CONTIGS)
+    STARAMR_RESULTS=runStarAMR(CONTIGS)
     // Run Abricate
-    run_abricate(CONTIGS)	    
+    ABRICATE_RESULTS=run_abricate(CONTIGS)	    
     // Get the CARD Json
     JSON = Channel.fromPath(params.card_json)
     // Load RGI database locally.
@@ -382,7 +386,6 @@ workflow {
                              skip: 1, 
                              name: 'Mob_rgi_contig_results.csv', 
                              storeDir: params.outDir )
-
     TOTAL_JSON = json_generator(CAT_TAB)
    
     // Create report

@@ -10,7 +10,9 @@ def process_star_amr(star_amr_path):
         "plasmid_finder": [],
         "resfinder_genes": []
     }
-    tsv_file = os.path.join(star_amr_path, "out", "detailed_summary.tsv")
+    tsv_file = os.path.join(star_amr_path, "detailed_summary.tsv")
+    #print (tsv_file)
+    #sys.exit()
     if os.path.exists(tsv_file):
         df = pd.read_csv(tsv_file, sep="\t")
         for _, row in df.iterrows():
@@ -42,6 +44,8 @@ def process_abricate(abricate_path):
 def process_merge(merge_path):
     mob_rgi_results = []
     csv_file = os.path.join(merge_path, "merged_tables.csv")
+    print(csv_file)
+    sys.exit()
     if os.path.exists(csv_file):
         df = pd.read_csv(csv_file)
         for _, row in df.iterrows():
@@ -67,7 +71,7 @@ def process_merge(merge_path):
 
 def process_ectyper(ectyper_path):
     ectyper_data = {}
-    tsv_file = os.path.join(ectyper_path, "out", "output.tsv")
+    tsv_file = os.path.join(ectyper_path, "output.tsv")
     if os.path.exists(tsv_file):
         df = pd.read_csv(tsv_file, sep="\t")
         ectyper_data = {
@@ -95,7 +99,7 @@ def process_sistr(sistr_path):
 
 def process_virulencefinder(virulencefinder_path):
     virulence_vf = []
-    json_file = os.path.join(virulencefinder_path, "out", "data.json")
+    json_file = os.path.join(virulencefinder_path, "data.json")
     if os.path.exists(json_file):
         with open(json_file) as f:
             data = json.load(f)
@@ -122,6 +126,8 @@ def main(results_dir):
         
         # Process each subdirectory if it exists
         staramr_path = os.path.join(isolate_dir, "STARAMR", "out")
+        #print(staramr_path)
+        #sys.exit()
         abricate_path = os.path.join(isolate_dir, "ABRICATE")
         merge_path = os.path.join(isolate_dir, "Merge")
         ectyper_path = os.path.join(isolate_dir, "ECTYPER", "out")
@@ -129,6 +135,7 @@ def main(results_dir):
         virulencefinder_path = os.path.join(isolate_dir, "VIRULENCEFINDER", "out")
         
         if os.path.exists(staramr_path):
+           
             results[isolate_id]["staramr"] = process_star_amr(staramr_path)
         
         if os.path.exists(abricate_path):
@@ -147,7 +154,7 @@ def main(results_dir):
             results[isolate_id]["virulencefinder"] = process_virulencefinder(virulencefinder_path)
     
     # Save results to JSON
-    output_file = os.path.join(results_dir, "results_summary.json")
+    output_file = "results_summary.json"
     with open(output_file, 'w') as f:
         json.dump(results, f, indent=4)
 
