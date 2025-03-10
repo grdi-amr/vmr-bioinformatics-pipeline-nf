@@ -104,19 +104,6 @@ The results will be collected in the directory `results` in the project
 directory by default. This can be changed with the option `--outDir`.
 
 
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
 =======
 # vmr-bioinformatics-pipeline
 >>>>>>> 8ba31a4a7f49c970d128063b5c48fff70a063d68
