@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # VMR-BIOINFORMATICS-PIPELINE-NF
 
 A nextflow pipeline for bioinformatics analysis from the GRDI-AMR2 data.
