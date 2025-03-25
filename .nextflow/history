@@ -1,0 +1,2 @@
+2024-10-03 10:46:48	-	sick_jones	-	72a09b9824e9f70ec21eab99873aa916	404341c7-f440-459e-96c0-827341e6871f	nextflow run pipeline.nf -with-dag flowchart.png
+2024-10-03 10:49:10	-	dreamy_colden	-	72a09b9824e9f70ec21eab99873aa916	ea460bc0-9fe1-435a-8d5a-46745610cadb	nextflow run pipeline.nf -preview -with-dag flowchart.png

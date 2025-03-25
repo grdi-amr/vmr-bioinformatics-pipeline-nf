@@ -102,6 +102,10 @@ process runStarAMR {
 
     script:
     """
+    if [ -d "out" ]; then
+	    rm -r "out"
+            echo "Directory 'out' removed."
+    fi
     staramr search -o out  $contigs  
     """
 }
@@ -158,7 +162,7 @@ process run_virulencefinder {
     
     script:
     """
-    mkdir out
+    mkdir -p out
     virulencefinder.py -i "$contigs" -o "out" -d "$params.vfinder" -p $params.virulencefinderDB
     """
 
@@ -260,7 +264,7 @@ process run_mobSuite {
     """
     stub: 
     """
-    mkdir mobSuite
+    mkdir -p mobSuite
     touch mobSuite/contig_report.txt
     touch mobSuite/chromosome.fasta
     """
