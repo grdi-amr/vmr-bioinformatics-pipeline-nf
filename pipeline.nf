@@ -356,7 +356,6 @@ workflow {
     CONTIGS = Channel
                 .fromPath(params.contigs)
                 .map { file -> tuple(file.baseName, file) }
-    CREATE_DBS()
     if ( params.ectyper == true) {
        ECTYPER_RESULTS = run_ectyper(CONTIGS)
     }
