@@ -3,11 +3,13 @@
 params.mobDB = "$workDir/databases/mobDB"
 params.card_json = "$workDir/databases"
 params.virulencefinderDB = "$workDir/databases/virlencefinder_db"
+params.prokkaDB = "$workDir/databases/prokka_db"
 
 // Database download controls
 params.download_mobDB = false
 params.download_card_json = false
 params.download_vfDB = false
+params.download_prokkaDB = false
 params.download_all = false
 params.overwrite = false
 
@@ -30,6 +32,11 @@ if ( params.download_all | params.download_vfDB ){
 } else {
     DL_vfdb = false
 }
+if ( params.download_all | params.download_prokkaDB ){
+    DL_prokka = true
+} else {
+    DL_prokka = false
+}
 
 // Log message
 log.info """ 
@@ -39,7 +46,7 @@ log.info """
     MOB-suite databases: ${DL_mob}
     CARD json: ${DL_card}
     Virulencefinder database: ${DL_vfdb}
-
+    Prokka database: ${DL_prokka}
 """.stripIndent(true)
 
 
@@ -90,6 +97,29 @@ process download_MOB_database {
     script:
     """ 
     mob_init --database_directory '.'
+    """
+    stub:
+    """
+    touch status.txt
+    """
+}
+
+process download_prokka_database {
+    label = ['db_download','process_low']
+    publishDir params.prokkaDB, mode: 'move', overwrite: true
+
+    input:
+
+    output:
+    file "*"
+
+    script:
+    """
+    # download prokka additional database
+    wget --tries=10 https://ftp.ncbi.nlm.nih.gov/hmm/TIGRFAMs/release_15.0/TIGRFAMs_15.0_HMM.LIB.gz
+    gzip -d TIGRFAMs_15.0_HMM.LIB.gz
+    mv TIGRFAMs_15.0_HMM.LIB TIGRFAMs_15.0.hmm
+    wget --tries=10 https://ftp.ncbi.nlm.nih.gov/hmm/current/hmm_PGAP.LIB -O PGAP_NCBI.hmm
     """
     stub:
     """
@@ -154,6 +184,39 @@ workflow download_MOB_WF {
 
 }
 
+workflow download_PROKKA_WF{
+    prokkaDB_dir = file (params.prokkaDB)
+    if ( !prokkaDB_dir.exists() ){
+        println "Downloading Prokka database, please wait"
+        download_prokka_database()
+    // But, if it DOES exist:
+    } else {
+        // Is the directory empty?
+        if ( prokkaDB_dir.isEmpty() ){
+        // If EMPTY: download it:
+            println "Downloading  virulence finder database, please wait"
+            download_prokka_database()
+        // But if the directory is not empty:
+        } else {
+            // Has overwrite flag been set?
+            // If YES: download it
+            if ( params.overwrite ){
+                println (
+                    "WARNING: Contents of $params.prokkaDB detected, " +
+                    "overwriting!")
+                download_prokka_database()
+            // But if NO: skip
+            } else {
+                println(
+                    "WARNING: Contents of $params.prokkaDB detected " +
+                    "but overwrite set to $params.overwrite, skipping" )
+            }
+        }
+    }
+
+
+}
+
 workflow download_VF_WF {
 
     vfDB_dir = file(params.virulencefinderDB)
@@ -180,7 +243,7 @@ workflow download_VF_WF {
             // But if NO: skip
             } else {
                 println(
-                    "WARNING: Contents of $params.mobDB detected " +
+                    "WARNING: Contents of $params.virulencefinderDB detected " +
                     "but overwrite set to $params.overwrite, skipping" )
             }
         }
@@ -202,7 +265,9 @@ workflow {
     if ( DL_vfdb ){
         download_VF_WF()
     }
-
+    if ( DL_prokka){
+        download_PROKKA_WF()
+    }
 }
 
 

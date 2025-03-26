@@ -23,6 +23,8 @@ params.ectyper = false
 params.sistr = false
 // Parameters for vfinder database 
 params.vfinder = ""
+// Parameters to activate kleborate
+params.kleborate = false
 
 // Help
 params.help = false
@@ -52,6 +54,8 @@ def helpMessage() {
           --vfinder         Use one or more of vfinder available databases: listeria, 
                             s.aureus_exoenzyme, s.aureus_hostimm, s.aureus_toxin, 
                             stx, virulence_ecoli, virulence_ent, virulence_entfm.
+          --kleborate       if used it will perform specific analysis for Klebsiella. Default=false
+
     """.stripIndent(true)
 }
 
@@ -70,6 +74,7 @@ log.info """\
     Species     : ${params.species}
     Sistr       : ${params.sistr}
     Ectyper     : ${params.ectyper}
+    Kleborate   : ${params.kleborate}
     mobDB       : ${params.mobDB}
     vfDB        : ${params.virulencefinderDB}
     card.json   : ${params.card_json}
@@ -120,6 +125,19 @@ process run_ectyper {
     script:
     """
     ectyper -i $contigs -o out
+    """
+}
+process run_kleborate {
+    label "KLEBORATE"
+    publishDir "${params.outDir}/$sample/KLEBORATE"
+
+    input:
+    tuple val(sample), path(contigs)
+    output:
+    tuple val(sample), path("out/*"), emit: keblorate_txt
+    script:
+    """
+    kleborate -a $contigs -o out -p "$params.kleborate"
     """
 }
 process run_sistr {
@@ -332,12 +350,13 @@ process create_report {
 workflow {
     def ECTYPER_RESULTS = Channel.empty()
     def SISTR_RESULTS = Channel.empty()
+    def KLEBORATE_RESULTS = Channel.empty()
     def VFINDER_RESULTS = Channel.empty()    
     // Get the Contigs into a channel
     CONTIGS = Channel
                 .fromPath(params.contigs)
                 .map { file -> tuple(file.baseName, file) }
-
+    CREATE_DBS()
     if ( params.ectyper == true) {
        ECTYPER_RESULTS = run_ectyper(CONTIGS)
     }
@@ -345,6 +364,9 @@ workflow {
     
     if (params.sistr == true) {
        SISTR_RESULTS = run_sistr(CONTIGS) 
+    }
+    if (params.kleborate == 'kpsc' || params.kleborate == 'kosc'){
+       KLEBORATE_RESULTS = run_kleborate(CONTIGS)
     }
     if (params.vfinder){
     VFINDER_RESULTS = run_virulencefinder(CONTIGS)
