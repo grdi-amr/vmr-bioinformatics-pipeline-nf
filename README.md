@@ -95,7 +95,7 @@ nextflow run pipeline.nf \
     --ectyper [true|false] \ default: false
     --mobDB PATH to the DIRECTORY of the MOB-suite databases
     --card_json PATH to CARD's card.json file.
-    --vfinder [listeria|s.aureus_exoenzyme|s.aureus_hostimm|s.aureus_toxin,\
+    --vfinder [listeria|s.aureus_exoenzyme|s.aureus_hostimm|s.aureus_toxin| \
                stx|virulence_ecoli|virulence_ent|virulence_entfm]
     --kleborate   [true|false] \ default: false
 ```
