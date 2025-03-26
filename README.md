@@ -69,7 +69,7 @@ nextflow run download_databases.nf \
     --download_vfDB "path/to/virulencefinder/directory"
 ```
 
-By default, MOB-RGI-NF will not overwrite the databases if
+By default, VMR-BIOINFORMATICS-PIPELINE-NF will not overwrite the databases if
 it detects that they are already installed at the given path; set `--overwrite`
 to overwrite the existing databases if needed.
 
@@ -95,10 +95,9 @@ nextflow run pipeline.nf \
     --ectyper [true|false] \ default: false
     --mobDB PATH to the DIRECTORY of the MOB-suite databases
     --card_json PATH to CARD's card.json file.
-    --vfinder Use one or more of vfinder available databases: listeria, \
-                            s.aureus_exoenzyme, s.aureus_hostimm, s.aureus_toxin,\
-                            stx, virulence_ecoli, virulence_ent, virulence_entfm.
-     --kleborate   if used it will perform specific analysis for Klebsiella. Default=false
+    --vfinder [listeria|s.aureus_exoenzyme|s.aureus_hostimm|s.aureus_toxin,\
+               stx|virulence_ecoli|virulence_ent|virulence_entfm]
+     --kleborate   [true|false] \ default: false
 ```
 
 This command assumes that the databases have first been downloaded into the
