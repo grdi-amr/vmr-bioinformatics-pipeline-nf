@@ -5,6 +5,8 @@ params.contigs = ""
 params.mobDB = "$workDir/databases/mobDB"
 params.card_json = "$workDir/databases/card.json"
 params.virulencefinderDB = "$workDir/databases/virulencefinder_db"
+params.icebergDB = "$workDir/databases/iceberg"
+params.prokkaDB = "$workDir/databases/prokka_db"
 
 // Full RGI or on plasmids only?
 params.plasmids_only = false
@@ -140,6 +142,48 @@ process run_kleborate {
     kleborate -a $contigs -o out -p "$params.kleborate"
     """
 }
+process run_prokka{
+    label "PROKKA"
+    publishDir "${params.outDir}/$sample/PROKKA"
+    cpus params.num_threads
+    
+    input:
+    tuple val(sample), path(contigs)
+    output:
+    tuple val(sample), path("annotation/${sample}.gff"), emit: gff
+    tuple val(sample), path("annotation/${sample}.gbk"), emit: gbk
+    tuple val(sample), path("annotation/${sample}.fna"), emit: genome
+    tuple val(sample), path("annotation/${sample}.faa"), emit: proteins
+    tuple val(sample), path("annotation/${sample}.ffn"), emit: genes
+    script:
+    """
+    #!/usr/bin/env bash
+     
+    dbs_dir=\$(prokka --listdb 2>&1 >/dev/null |  grep "databases in" | cut -f 4 -d ":" | tr -d " ") ;
+    cp -r \$dbs_dir prokka_db
+    cp ${params.prokkaDB}/PGAP_NCBI.hmm prokka_db/hmm
+    ( cd  prokka_db/hmm/ ; for i in *.hmm ; do hmmpress -f \$i ; done )
+    awk '{ if (\$0 ~ />/) print substr(\$0,1,21) ; else print \$0 }' $contigs > cleaned_header.fasta
+    prokka \\
+        --dbdir prokka_db \\
+        --outdir annotation \\
+        --cpus $task.cpus \\
+        --mincontiglen 200 \\
+        --prefix ${sample} \\
+        --genus '' \\
+        --species '' \\
+        --strain \"${sample}\" \\
+        cleaned_header.fasta
+    rm -r prokka_db
+    """
+
+
+
+
+
+
+
+}
 process run_sistr {
     label "SISTR"
     publishDir "${params.outDir}/$sample/SISTR"
@@ -204,6 +248,95 @@ process load_RGI_database {
 
 }
 
+process run_iceberg {
+    label = [ 'misc', 'process_low' ]
+    publishDir "${params.outDir}/$sample/ICEBERG"
+    cpus params.num_threads
+
+    input:
+    tuple val(sample), file(genes_aa)
+    tuple val(sample), file (genome)
+    output:
+    tuple val(sample), path("${sample}_iceberg_blastp_onGenes.summary.txt") , emit: genes_summary
+    tuple val(sample), path("${sample}_iceberg_blastp_onGenes.txt")         , emit: results
+    tuple val(sample), path("${sample}_iceberg_blastn_onGenome.summary.txt"), emit: genome_summary
+    tuple val(sample), path('*.txt'), emit: all
+
+    script:
+    """
+    # ICEberg is a protein and nucleotide dabatase
+    # In protein are the genes found inside ICEs
+    # In nucleotide are the full-length ICEs
+     python $projectDir/bin/run_blasts.py \\
+        blastp \\
+        --query $genes_aa \\
+        --db ${params.icebergDB}/diamond.dmnd \\
+        --minid 85 \\
+        --mincov 85 \\
+        --threads $task.cpus \\
+        --out ${sample}_iceberg_blastp_onGenes.txt --2way | \\
+    sed -e 's/GENE/ICEBERG_ID/g' > ${sample}_iceberg_blastp_onGenes.summary.txt ;
+   
+    ## Checking for full-length ICEs
+    ### The blast db was throwing errors
+    makeblastdb \\
+        -dbtype nucl \\
+        -in ${params.icebergDB}/sequences \\
+        -out sequences ;
+     python $projectDir/bin/run_blasts.py \\
+        blastn \\
+        --query $genome \\
+        --db sequences \\
+        --minid 0 \\
+        --mincov 0 \\
+        --threads ${task.cpus} \\
+        --out ${sample}_iceberg_blastn_onGenome.txt | \\
+    sed -e 's/GENE/ICEBERG_ID/g' > ${sample}_iceberg_blastn_onGenome.summary.txt ;
+    """    
+
+
+}
+process run_INTEGRON_FINDER{
+    label "INTEGRON_FINDER"
+    publishDir "${params.outDir}/$sample/INTEGRON_FINDER"
+    cpus params.num_threads
+
+    input:
+    tuple val(sample), file(genome)
+
+    output:
+    tuple val(sample), path("*")                      , emit: all
+    tuple val(sample), path("${sample}_integrons.gbk"), emit: gbk, optional: true
+    path("integronfinder_version.txt")
+
+    script:
+    """
+    # Get version
+    integron_finder --version > integronfinder_version.txt ;
+
+    # run tool
+    integron_finder \\
+        --local-max \\
+        --func-annot \\
+        --pdf \\
+        --gbk \\
+        --cpu $task.cpus \\
+        $genome
+    
+    # move results
+    mv Results_Integron_Finder_${sample}/* . ;
+    rm -rf Results_Integron_Finder_${sample} ;
+    
+    # convert to gff if available
+    for gbk in \$(ls *.gbk) ; do
+        cat \$gbk >> ${sample}_integrons.gbk ;
+    done
+    """   
+
+
+
+
+}
 process run_RGI { 
     label "RGI"
     publishDir "${params.outDir}/$sample/RGI"
@@ -370,7 +503,11 @@ workflow {
     if (params.vfinder){
     VFINDER_RESULTS = run_virulencefinder(CONTIGS)
     }
-    
+    //Run_Prokka
+     PROKKA_RESULTS = run_prokka(CONTIGS)
+    //Run Iceberg
+     ICEBERG_RESULTS = run_iceberg(PROKKA_RESULTS.proteins, PROKKA_RESULTS.genome)
+     INTEGRON_FINDER_RESULTS =run_INTEGRON_FINDER(PROKKA_RESULTS.genome)
    // Run mob_recon on the contigs.
     MOB_RESULTS = run_mobSuite(CONTIGS)
     // Run star_amr
@@ -411,9 +548,9 @@ workflow {
                              skip: 1, 
                              name: 'Mob_rgi_contig_results.csv', 
                              storeDir: params.outDir )
-    TOTAL_JSON = json_generator(CAT_TAB)
+    //TOTAL_JSON = json_generator(CAT_TAB)
    
     // Create report
 //    create_report(CAT_TAB)
- }
+} 
 
