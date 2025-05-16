@@ -147,7 +147,13 @@ def summary(output):
         gene=line["stitle"].split('~~~')[1]
         acc=line["stitle"].split('~~~')[2]
         prodc=line["stitle"].split('~~~')[3].split(" ", 1)[0]
-        desc=line["stitle"].split('~~~')[4].split(" ", 1)[1]
+        #print(f"DEBUG: stitle={line['stitle']}")
+        parts = line["stitle"].split('~~~')
+        if len(parts) > 4:
+            desc = parts[4].split(" ", 1)[1] if " " in parts[4] else parts[4]
+        else:
+            desc = "Unknown"
+        #desc=line["stitle"].split('~~~')[4].split(" ", 1)[1]
         # Subject coverage
         cov=round((100 * (line["length"] - line["gaps"]) / line["slen"]), 2)
         # Identity

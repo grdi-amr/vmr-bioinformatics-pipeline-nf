@@ -8,6 +8,7 @@ params.virulencefinderDB = "$workDir/databases/virulencefinder_db"
 params.icebergDB = "$workDir/databases/iceberg"
 params.prokkaDB = "$workDir/databases/prokka_db"
 
+
 // Full RGI or on plasmids only?
 params.plasmids_only = false
 
@@ -296,7 +297,7 @@ process run_iceberg {
 
 
 }
-process run_INTEGRON_FINDER{
+process run_integron_finder{
     label "INTEGRON_FINDER"
     publishDir "${params.outDir}/$sample/INTEGRON_FINDER"
     cpus params.num_threads
@@ -336,6 +337,83 @@ process run_INTEGRON_FINDER{
 
 
 
+}
+process run_island_path{
+    label "ISLANDPATH"
+    publishDir "${params.outDir}/$sample/ISLAND_PATH"
+    cpus params.num_threads
+
+    input:
+    tuple val(sample), file("annotation.gbk")
+
+    output:
+    tuple val(sample), path("${sample}_predicted_GIs.bed"), emit: results
+    script:
+    """
+    # Split genbank files
+    splitgenbank.pl annotation.gbk && rm annotation.gbk ;
+
+    # Run islandpath in each
+    touch ${sample}_predicted_GIs.bed ;
+    for file in \$(ls *.gbk); do \
+      touch \${file%%.gbk}_GIs.txt ;
+      ( sed '/CDS.*::.*0/d' \$file | grep -q "CDS" ) && \\
+          islandpath \\
+          \$file \\
+          \${file%%.gbk}_GIs.txt 2> dimob.err ;
+          name="\${file%%.gbk}" ;
+          awk -v contig=\$name 'BEGIN { FS = "\\t"; OFS="\\t" } { print contig,\$2,\$3 }' \${file%%.gbk}_GIs.txt >> ${sample}_predicted_GIs.bed ;
+        done
+    """
+
+
+}
+process run_digis{
+    label = [ 'misc', 'process_low' ]
+    publishDir "${params.outDir}/$sample/DIGIS"
+    cpus params.num_threads
+    
+    input:
+    tuple val(sample), path(genome), path(genbank)
+     
+    output:
+    tuple val(sample), path("digIS")                      , emit: all
+    tuple val(sample), path("digIS/results/${sample}.gff"), emit: gff
+    tuple val(sample), path("${sample}_IS.gff"), path("digIS/results/fastas/${sample}_IS.fa"), path("digIS/results/fastas/${sample}_IS.faa"), emit: gff_and_sequences
+
+    script:
+    """
+    # run digIS
+    conda run -n digIS python3 \$(which digIS_search.py) -i $genome -g $genbank -o digIS
+
+    # parse digIS to get nucleotide and aminoacide
+    # also put ids in uppercase
+    # required for annotation merging and sqldb
+
+   ## dir for fastas
+   mkdir -p digIS/results/fastas ;
+
+   ## save info in gff
+   sed \\
+     -e 's/id=/ID=/g' \\
+     digIS/results/${sample}.gff > ${sample}_IS.gff ;
+
+   ## get nucl sequences
+   gff-toolbox \\
+     convert \\
+     -i ${sample}_IS.gff  \\
+     -f fasta-nt \\
+     --fasta $genome \\
+     --fasta_features transposable_element > digIS/results/fastas/${sample}_IS.fa  ;
+  
+   ## get prot sequences
+   gff-toolbox \\
+     convert \\
+     -i ${sample}_IS.gff  \\
+     -f fasta-aa \\
+     --fasta $genome \\
+     --fasta_features transposable_element > digIS/results/fastas/${sample}_IS.faa ;
+   """
 }
 process run_RGI { 
     label "RGI"
@@ -489,6 +567,8 @@ workflow {
     CONTIGS = Channel
                 .fromPath(params.contigs)
                 .map { file -> tuple(file.baseName, file) }
+    //Run_Prokka
+     PROKKA_RESULTS = run_prokka(CONTIGS)
     if ( params.ectyper == true) {
        ECTYPER_RESULTS = run_ectyper(CONTIGS)
     }
@@ -498,22 +578,22 @@ workflow {
        SISTR_RESULTS = run_sistr(CONTIGS) 
     }
     if (params.kleborate == 'kpsc' || params.kleborate == 'kosc'){
-       KLEBORATE_RESULTS = run_kleborate(CONTIGS)
+       KLEBORATE_RESULTS = run_kleborate(PROKKA_RESULTS.genome)
     }
     if (params.vfinder){
-    VFINDER_RESULTS = run_virulencefinder(CONTIGS)
+       VFINDER_RESULTS = run_virulencefinder(CONTIGS)
     }
-    //Run_Prokka
-     PROKKA_RESULTS = run_prokka(CONTIGS)
     //Run Iceberg
-     ICEBERG_RESULTS = run_iceberg(PROKKA_RESULTS.proteins, PROKKA_RESULTS.genome)
-     INTEGRON_FINDER_RESULTS =run_INTEGRON_FINDER(PROKKA_RESULTS.genome)
+    ICEBERG_RESULTS = run_iceberg(PROKKA_RESULTS.proteins, PROKKA_RESULTS.genome)
+    INTEGRON_FINDER_RESULTS =run_integron_finder(PROKKA_RESULTS.genome)
+    ISLAND_PATH_RESULTS = run_island_path(PROKKA_RESULTS.gbk)
+    DIGIS_RESULTS = run_digis(PROKKA_RESULTS.genome.join(PROKKA_RESULTS.gbk))
    // Run mob_recon on the contigs.
-    MOB_RESULTS = run_mobSuite(CONTIGS)
+    MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
     // Run star_amr
-    STARAMR_RESULTS=runStarAMR(CONTIGS)
+    STARAMR_RESULTS=runStarAMR(PROKKA_RESULTS.genome)
     // Run Abricate
-    ABRICATE_RESULTS=run_abricate(CONTIGS)	    
+    ABRICATE_RESULTS=run_abricate(PROKKA_RESULTS.genome)	    
     // Get the CARD Json
     JSON = Channel.fromPath(params.card_json)
     // Load RGI database locally.

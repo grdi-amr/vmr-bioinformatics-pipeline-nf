@@ -97,7 +97,7 @@ nextflow run pipeline.nf \
     --card_json PATH to CARD's card.json file.
     --vfinder [listeria|s.aureus_exoenzyme|s.aureus_hostimm|s.aureus_toxin| \
                stx|virulence_ecoli|virulence_ent|virulence_entfm]
-    --kleborate   [true|false] \ default: false
+    --kleborate   [kpsc|kosc] \ default: false
 ```
 
 This command assumes that the databases have first been downloaded into the
