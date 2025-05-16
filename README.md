@@ -37,21 +37,7 @@ Clone this pipeline into a working directory.
 ### Slurm compatibility
 
 The pipeline is compatible with slurm, that is needed when used at PHAC/Waffles server. Just add the "-c path/to/vmr-bioinformatics-pipeline-nf/nextflow_slurm.config"" parameter.
-### Tools integrated to the pipeline
 
-
-|Tool|	Description|
-|StarAMR	| Detects antimicrobial resistance using ResFinder and PointFinder.|
-RGI	Detects AMR genes using the CARD database.
-MOB-suite	Plasmid reconstruction and typing.
-ECTyper	Serotype prediction for E. coli.
-SISTR	Serotype prediction for Salmonella.
-Kleborate	Characterization of Klebsiella isolates.
-VirulenceFinder	Detects virulence genes from selected DBs.
-Abricate (vfdb)	Screens contigs for virulence factors using VFDB.
-Prokka	Genome annotation of input contigs.
-ICEberg BLAST	Detects integrative and conjugative elements (ICEs).
-Integron Finder	Identifies integrons in bacterial genomes.
 
 ### Download databases
 
@@ -123,6 +109,21 @@ path to the card.json file
 
 The results will be collected in the directory `results` in the project
 directory by default. This can be changed with the option `--outDir`.
+
+### Tools Included in the Pipeline
+
+- **StarAMR**: Antimicrobial resistance detection using ResFinder, PlasmidFinder, MLST.
+- **MOB-suite**: Plasmid typing and reconstruction.
+- **RGI**: AMR gene detection using CARD database.
+- **ECTyper**: E. coli serotyping.
+- **SISTR**: Salmonella serotyping.
+- **Kleborate**: Klebsiella virulence and resistance profiling.
+- **Prokka**: Genome annotation.
+- **VirulenceFinder**: Detection of virulence genes.
+- **Abricate**: Screening contigs against the VFDB database.
+- **ICEberg**: Identification of integrative and conjugative elements (ICEs).
+- **IntegronFinder**: Identification of integrons in genomes.
+
 
 
 =======
