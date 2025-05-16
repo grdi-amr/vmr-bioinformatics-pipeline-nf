@@ -37,6 +37,21 @@ Clone this pipeline into a working directory.
 ### Slurm compatibility
 
 The pipeline is compatible with slurm, that is needed when used at PHAC/Waffles server. Just add the "-c path/to/vmr-bioinformatics-pipeline-nf/nextflow_slurm.config"" parameter.
+### Tools integrated to the pipeline
+
+
+|Tool|	Description|
+|StarAMR	| Detects antimicrobial resistance using ResFinder and PointFinder.|
+RGI	Detects AMR genes using the CARD database.
+MOB-suite	Plasmid reconstruction and typing.
+ECTyper	Serotype prediction for E. coli.
+SISTR	Serotype prediction for Salmonella.
+Kleborate	Characterization of Klebsiella isolates.
+VirulenceFinder	Detects virulence genes from selected DBs.
+Abricate (vfdb)	Screens contigs for virulence factors using VFDB.
+Prokka	Genome annotation of input contigs.
+ICEberg BLAST	Detects integrative and conjugative elements (ICEs).
+Integron Finder	Identifies integrons in bacterial genomes.
 
 ### Download databases
 
