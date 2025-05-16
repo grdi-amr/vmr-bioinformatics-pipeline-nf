@@ -123,6 +123,8 @@ directory by default. This can be changed with the option `--outDir`.
 - **Abricate**: Screening contigs against the VFDB database.
 - **ICEberg**: Identification of integrative and conjugative elements (ICEs).
 - **IntegronFinder**: Identification of integrons in genomes.
+- **IslandPath-DIMOB**: Prediction of genomic islands using sequence composition.
+- **DIGIS**: Focused detection of **insertion sequences (IS elements)** using a curated IS database.
 
 
 
