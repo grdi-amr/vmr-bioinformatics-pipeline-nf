@@ -32,6 +32,8 @@ params.kleborate = false
 // Help
 params.help = false
 
+def staticKleborate = params.kleborate
+
 def helpMessage() { 
 
     log.info """
@@ -135,12 +137,13 @@ process run_kleborate {
     publishDir "${params.outDir}/$sample/KLEBORATE"
 
     input:
-    tuple val(sample), path(contigs)
+    tuple val(sample), path(contigs), val(flag)
+    
     output:
     tuple val(sample), path("out/*"), emit: keblorate_txt
     script:
     """
-    kleborate -a $contigs -o out -p "$params.kleborate"
+    kleborate -a $contigs -o out -p "$flag"
     """
 }
 process run_prokka{
@@ -185,6 +188,39 @@ process run_prokka{
 
 
 }
+process run_refseq_masher{
+    label "REFSEQ_MASHER"
+    publishDir "${params.outDir}/$sample/REFSEQ_MASHER"
+    input:
+    tuple val(sample), path(genome)
+
+    output:
+    tuple val(sample), path("refseq_masher_results.txt"), emit: results
+    tuple val(sample), path("kleborate_flag.txt"), emit: flag
+
+    script:
+    """
+
+    # Run tool
+    refseq_masher \\
+      -vv matches \\
+      --top-n-results 10 \\
+      --output-type tab \\
+      $genome > refseq_masher_results.txt
+    top_hit=\$(tail -n +2 "refseq_masher_results.txt" | head -n 1 | cut -f2)
+    if echo "\$top_hit" | grep -E "Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola|Klebsiella aerogenes"; then
+        echo "kpsc" > kleborate_flag.txt
+    elif echo "\$top_hit" | grep -E "Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis"; then
+         echo "kosc" > kleborate_flag.txt
+    else
+        echo "${staticKleborate ?: 'none'}" > kleborate_flag.txt
+    fi
+
+    """
+    
+
+}
+
 process run_sistr {
     label "SISTR"
     publishDir "${params.outDir}/$sample/SISTR"
@@ -562,26 +598,47 @@ workflow {
     def ECTYPER_RESULTS = Channel.empty()
     def SISTR_RESULTS = Channel.empty()
     def KLEBORATE_RESULTS = Channel.empty()
-    def VFINDER_RESULTS = Channel.empty()    
+    def VFINDER_RESULTS = Channel.empty()
+    //def staticKleborate = params.kleborate    
     // Get the Contigs into a channel
     CONTIGS = Channel
                 .fromPath(params.contigs)
                 .map { file -> tuple(file.baseName, file) }
     //Run_Prokka
-     PROKKA_RESULTS = run_prokka(CONTIGS)
+    PROKKA_RESULTS = run_prokka(CONTIGS)
+    MASHER_RESULTS = run_refseq_masher (PROKKA_RESULTS.genome)
+    
+    //check_kleborate_species(MASHER_RESULTS.results)
+    //    .set { kleborate_flag_ch }
+
+    //kleborate_flag_ch.view { println "kleborate_flag_ch: $it" }
+    //KLEBORATE_RUN = SPECIE.kleborate_flag_ch.filter { it == 'kpsc' || it == 'kosc' }
+    // Run kleborate only if the flag says so
+    run_kleborate_flag = MASHER_RESULTS.flag
+    .map { sample, flag_file -> 
+        def flag = flag_file.text.trim()
+        //def valid = (flag == 'kpsc' || flag == 'kosc') ? flag : false
+        //tuple(sample, valid)
+        (flag == 'kpsc' || flag == 'kosc') ? tuple(sample, flag) : null
+    }
+    .filter { it != null }
+    kleborate_input = PROKKA_RESULTS.genome
+    .join(run_kleborate_flag)
+    kleborate_input.view()
+    KLEBORATE_RESULTS = run_kleborate(kleborate_input)
     if ( params.ectyper == true) {
-       ECTYPER_RESULTS = run_ectyper(CONTIGS)
+       ECTYPER_RESULTS = run_ectyper(PROKKA_RESULTS.genome)
     }
        
     
     if (params.sistr == true) {
-       SISTR_RESULTS = run_sistr(CONTIGS) 
+       SISTR_RESULTS = run_sistr(PROKKA_RESULTS.genome) 
     }
-    if (params.kleborate == 'kpsc' || params.kleborate == 'kosc'){
-       KLEBORATE_RESULTS = run_kleborate(PROKKA_RESULTS.genome)
-    }
+    //if (params.kleborate == 'kpsc' || params.kleborate == 'kosc'){
+    //   KLEBORATE_RESULTS = run_kleborate(PROKKA_RESULTS.genome)
+    //}
     if (params.vfinder){
-       VFINDER_RESULTS = run_virulencefinder(CONTIGS)
+       VFINDER_RESULTS = run_virulencefinder(PROKKA_RESULTS.genome)
     }
     //Run Iceberg
     ICEBERG_RESULTS = run_iceberg(PROKKA_RESULTS.proteins, PROKKA_RESULTS.genome)
@@ -609,7 +666,7 @@ workflow {
                                 LOCAL_DB.out.collect()  )
     } else { 
         // Otherwise, just run RGI on the full sample set
-        RGI_RESULTS = run_RGI(CONTIGS, LOCAL_DB.out.collect())
+        RGI_RESULTS = run_RGI(PROKKA_RESULTS.genome, LOCAL_DB.out.collect())
     }
 
     // Create channel with tables to be combined
