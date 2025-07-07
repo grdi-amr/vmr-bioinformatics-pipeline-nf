@@ -27,12 +27,12 @@ params.sistr = false
 // Parameters for vfinder database 
 params.vfinder = ""
 // Parameters to activate kleborate
-params.kleborate = false
+//params.kleborate = false
 
 // Help
 params.help = false
 
-def staticKleborate = params.kleborate
+//def staticKleborate = params.kleborate
 
 def helpMessage() { 
 
@@ -59,7 +59,7 @@ def helpMessage() {
           --vfinder         Use one or more of vfinder available databases: listeria, 
                             s.aureus_exoenzyme, s.aureus_hostimm, s.aureus_toxin, 
                             stx, virulence_ecoli, virulence_ent, virulence_entfm.
-          --kleborate       if used it will perform specific analysis for Klebsiella. Default=false
+          
 
     """.stripIndent(true)
 }
@@ -79,7 +79,6 @@ log.info """\
     Species     : ${params.species}
     Sistr       : ${params.sistr}
     Ectyper     : ${params.ectyper}
-    Kleborate   : ${params.kleborate}
     mobDB       : ${params.mobDB}
     vfDB        : ${params.virulencefinderDB}
     card.json   : ${params.card_json}
@@ -213,7 +212,7 @@ process run_refseq_masher{
     elif echo "\$top_hit" | grep -E "Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis"; then
          echo "kosc" > kleborate_flag.txt
     else
-        echo "${staticKleborate ?: 'none'}" > kleborate_flag.txt
+        echo "none" > kleborate_flag.txt
     fi
 
     """
