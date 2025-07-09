@@ -123,7 +123,7 @@ process run_ectyper {
     publishDir "${params.outDir}/$sample/ECTYPER"
 
     input:
-    tuple val(sample), path(contigs)
+    tuple val(sample), path(contigs), val(flag)
     output:
     tuple val(sample), path("out/output.tsv"), emit: ectyper_tsv    
     script:
@@ -211,6 +211,8 @@ process run_refseq_masher{
         echo "kpsc" > kleborate_flag.txt
     elif echo "\$top_hit" | grep -E "Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis"; then
          echo "kosc" > kleborate_flag.txt
+    elif echo "\$top_hit" | grep -E "Escherichia coli"; then
+         echo "virulence_ecoli" > kleborate_flag.txt
     else
         echo "none" > kleborate_flag.txt
     fi
@@ -254,14 +256,14 @@ process run_virulencefinder {
     publishDir "${params.outDir}/$sample/VIRULENCEFINDER"
 
     input:
-    tuple val(sample), path(contigs)
+    tuple val(sample), path(contigs), val(flag)
     output:
     tuple val(sample), path("out/"), emit: vf_tsv
     
     script:
     """
     mkdir -p out
-    virulencefinder.py -i "$contigs" -o "out" -d "$params.vfinder" -p $params.virulencefinderDB
+    virulencefinder.py -i "$contigs" -o "out" -d "$flag" -p $params.virulencefinderDB
     """
 
 
@@ -625,7 +627,26 @@ workflow {
     .join(run_kleborate_flag)
     kleborate_input.view()
     KLEBORATE_RESULTS = run_kleborate(kleborate_input)
-    if ( params.ectyper == true) {
+    run_ectyper_flag = MASHER_RESULTS.flag
+    .map { sample, flag_file ->
+        def flag = flag_file.text.trim()
+        (flag == 'virulence_ecoli') ? tuple(sample, flag) : null
+    }
+    .filter { it != null }
+    ectyper_input = PROKKA_RESULTS.genome
+    .join(run_ectyper_flag)
+    ECTYPER_RESULTS = run_ectyper(ectyper_input)
+    run_vfinder_flag = MASHER_RESULTS.flag
+    .map { sample, flag_file ->
+        def flag = flag_file.text.trim()
+        (flag == 'virulence_ecoli' || flag == 'virulence_ent') ? tuple(sample, flag) : null
+    }
+    .filter { it != null }
+    vfinder_input = PROKKA_RESULTS.genome
+    .join(run_vfinder_flag)
+   vfinder_input.view() 
+   VFINDER_RESULTS = run_virulencefinder(vfinder_input) 
+   if ( params.ectyper == true) {
        ECTYPER_RESULTS = run_ectyper(PROKKA_RESULTS.genome)
     }
        
