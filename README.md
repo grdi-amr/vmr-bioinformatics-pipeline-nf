@@ -93,12 +93,11 @@ nextflow run pipeline.nf \
     --species "species" \  default "Escherichia coli"
     --contigs "dir/to/sequences/*.fasta"
     --sistr [true|false] \ default: false
-    --ectyper [true|false] \ default: false
     --mobDB PATH to the DIRECTORY of the MOB-suite databases
     --card_json PATH to CARD's card.json file.
     --vfinder [listeria|s.aureus_exoenzyme|s.aureus_hostimm|s.aureus_toxin| \
                stx|virulence_ecoli|virulence_ent|virulence_entfm]
-    --kleborate   [kpsc|kosc] \ default: false
+    
 ```
 
 This command assumes that the databases have first been downloaded into the
@@ -106,6 +105,9 @@ default directory by the `download_databases.nf` pipeline. Otherwise, specify
 the location of the databases. Use the option `--mobDB` to specify the path to
 the parent directory of the MOB-suite databases, and `--cardDB` to specify the
 path to the card.json file
+
+New addition: Once detected a Klebsiella species, Keborate will run automatically with the parameters for either Pneumoniae or Oxytocal complexes.
+On top of that if Escherichia coli is identified, ectyper and virulence finder will automatically be ran.
 
 The results will be collected in the directory `results` in the project
 directory by default. This can be changed with the option `--outDir`.
@@ -119,6 +121,7 @@ directory by default. This can be changed with the option `--outDir`.
 - **SISTR**: Salmonella serotyping.
 - **Kleborate**: Klebsiella virulence and resistance profiling.
 - **Prokka**: Genome annotation.
+- **Refseq_masher**: Species identification through similarities.
 - **VirulenceFinder**: Detection of virulence genes.
 - **Abricate**: Screening contigs against the VFDB database.
 - **ICEberg**: Identification of integrative and conjugative elements (ICEs).
