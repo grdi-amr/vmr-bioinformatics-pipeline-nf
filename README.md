@@ -26,9 +26,7 @@ On top of that if Escherichia coli is identified, ectyper and virulence finder w
 Dependencies:
 
 * NextFlow
-* If using conda profile: 
-    - Conda
-    - Mamba
+
 * If using docker/singularity profile: 
     - Docker
     - Singularity
@@ -51,7 +49,7 @@ MOB-suite databases, `--download_card_json` to download the CARD json file, or
 
 ```bash
 nextflow run download_databases.nf \
-    -profile [conda|docker|singularity] \
+    -profile [docker|singularity] \
     --download_all
 ```
 
