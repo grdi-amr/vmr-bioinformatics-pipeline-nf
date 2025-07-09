@@ -16,7 +16,9 @@ MOB-suite's results. This enables the user to identify if the AMR determinants
 are present on the chromosome, or on a plasmid. If multiple samples are passed
 to the program, the results will be collated into a single table.  StarAMR will identify MLST and Resfinder genes.
 Sistr and Ectyper can be used depending on the species isolated in the project to perform the serotyping.
-Abricate is configured to search into the VFDB database to retrieve virulence genes.
+Abricate is configured to search into the VFDB database to retrieve virulence genes .Once detected a Klebsiella species, Keborate will run 
+automatically with the parameters for either Pneumoniae or Oxytocal complexes.
+On top of that if Escherichia coli is identified, ectyper and virulence finder will automatically be ran.
 
 
 ## Installation
@@ -106,8 +108,7 @@ the location of the databases. Use the option `--mobDB` to specify the path to
 the parent directory of the MOB-suite databases, and `--cardDB` to specify the
 path to the card.json file
 
-New addition: Once detected a Klebsiella species, Keborate will run automatically with the parameters for either Pneumoniae or Oxytocal complexes.
-On top of that if Escherichia coli is identified, ectyper and virulence finder will automatically be ran.
+
 
 The results will be collected in the directory `results` in the project
 directory by default. This can be changed with the option `--outDir`.
