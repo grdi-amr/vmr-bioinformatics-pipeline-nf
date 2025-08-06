@@ -36,7 +36,7 @@ jobs:
             --icebergDB work/databases/iceberg \
             --prokkaDB work/databases/prokka_db \
             --outDir test_output \
-            -profile test -resume -dry-run
+            -profile test -resume --dry-run
 
       - name: Test database download pipeline with stubs
         run: |
