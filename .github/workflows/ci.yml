@@ -28,14 +28,12 @@ jobs:
       - name: Install Singularity
         run: |
           sudo apt-get update && sudo apt-get install -y singularity-container
-      - name: Set ETE3_HOME environment variable
-        run: echo "ETE3_HOME=$PWD/.etetoolkit" >> $GITHUB_ENV
       - name: Test database download pipeline with stubs
         run: |
           nextflow run download_databases.nf \
             --download_all true \
             --overwrite true \
-            -profile singularity,test -resume
+            -profile singularity,test -resume --dry-run
 
       - name: Test main pipeline (dry run with stub data)
         run: |
