@@ -111,7 +111,7 @@ process download_MOB_database {
 
     script:
     """ 
-    export ETE3_HOME = "${workDir}/.etetoolkit"
+    export ETE3_HOME="${workDir}/.etetoolkit"
     mkdir -p \$ETE3_HOME
     mob_init --database_directory '.'
     """
