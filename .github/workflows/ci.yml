@@ -33,7 +33,7 @@ jobs:
           nextflow run download_databases.nf \
             --download_all true \
             --overwrite true \
-            -profile singularity,test -resume --dry-run
+            -profile singularity,test -stub-run -resume --dry-run
 
       - name: Test main pipeline (dry run with stub data)
         run: |
