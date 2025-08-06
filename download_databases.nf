@@ -92,7 +92,7 @@ process download_virulencefinder_database {
     publishDir params.card_json, mode: 'move', overwrite: true
     input:
 
-    output:
+     output:
     path "virulencefinder_db/*"
        
     """
@@ -103,7 +103,8 @@ process download_virulencefinder_database {
 process download_MOB_database {
     label "MOB"
     publishDir params.mobDB, mode: 'move', overwrite: true
-
+    environment:
+        ETE3_HOME = "${workDir}/.etetoolkit"
     input:
 
     output: 
