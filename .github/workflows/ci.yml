@@ -26,6 +26,13 @@ jobs:
           mkdir -p work/databases/{mobDB,virlencefinder_db,prokka_db,iceberg,phaster}
           mkdir -p test_output
 
+      - name: Test database download pipeline with stubs
+        run: |
+          nextflow run download_databases.nf \
+            --download_all true \
+            --overwrite true \
+            -profile test -resume
+
       - name: Test main pipeline (dry run with stub data)
         run: |
           nextflow run pipeline.nf \
@@ -36,14 +43,8 @@ jobs:
             --icebergDB work/databases/iceberg \
             --prokkaDB work/databases/prokka_db \
             --outDir test_output \
-            -profile test -resume --dry-run
+            -profile singularity,test -resume --dry-run
 
-      - name: Test database download pipeline with stubs
-        run: |
-          nextflow run download_databases.nf \
-            --download_all true \
-            --overwrite true \
-            -profile test -resume
 
       - name: List downloaded database stubs
         run: |
