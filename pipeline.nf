@@ -207,12 +207,16 @@ process run_refseq_masher{
       --output-type tab \\
       $genome > refseq_masher_results.txt
     top_hit=\$(tail -n +2 "refseq_masher_results.txt" | head -n 1 | cut -f2)
-    if echo "\$top_hit" | grep -E "Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola|Klebsiella aerogenes"; then
+    if echo "\$top_hit" | grep -E "Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola"; then
         echo "kpsc" > kleborate_flag.txt
     elif echo "\$top_hit" | grep -E "Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis"; then
          echo "kosc" > kleborate_flag.txt
     elif echo "\$top_hit" | grep -E "Escherichia coli"; then
          echo "virulence_ecoli" > kleborate_flag.txt
+    elif echo "\$top_hit" | grep -E "Salmonella enterica"; then
+         echo "Salmonella enterica" > kleborate_flag.txt
+    elif echo "\$top_hit" | grep -E "Salmonella bongori"; then
+         echo "Salmonella bongori" > kleborate_flag.txt
     else
         echo "none" > kleborate_flag.txt
     fi
@@ -227,12 +231,12 @@ process run_sistr {
     publishDir "${params.outDir}/$sample/SISTR"
 
     input:
-    tuple val(sample), path(contigs)
+    tuple val(sample), path(contigs), val(flag)
     output:
     tuple val(sample), path("sistr.tab"), emit: sistr_tsv
     script:
     """
-    sistr -i $contigs "$params.species" -o sistr -f tab
+    sistr -i $contigs "$flag" -o sistr -f tab
     """
 }
 process run_abricate {
@@ -636,6 +640,15 @@ workflow {
     ectyper_input = PROKKA_RESULTS.genome
     .join(run_ectyper_flag)
     ECTYPER_RESULTS = run_ectyper(ectyper_input)
+    run_salmonella_flag = MASHER_RESULTS.flag
+    .map { sample, flag_file ->
+        def flag = flag_file.text.trim()
+        (flag == 'Salmonella enterica' || flag == 'Salmonella bongori') ? tuple(sample, flag) : null
+    }
+    .filter { it != null }
+    salmonella_input = PROKKA_RESULTS.genome
+    .join(run_salmonella_flag)
+    SISTR_RESULTS = run_sistr(salmonella_input)
     run_vfinder_flag = MASHER_RESULTS.flag
     .map { sample, flag_file ->
         def flag = flag_file.text.trim()
@@ -650,10 +663,13 @@ workflow {
        ECTYPER_RESULTS = run_ectyper(PROKKA_RESULTS.genome)
     }
        
-    
-    if (params.sistr == true) {
-       SISTR_RESULTS = run_sistr(PROKKA_RESULTS.genome) 
-    }
+    if (params.test) {
+    log.info "Test mode enabled. Exiting pipeline early for CI testing."
+    System.exit(0)
+    }    
+    //if (params.sistr == true) {
+    //   SISTR_RESULTS = run_sistr(PROKKA_RESULTS.genome) 
+    //}
     //if (params.kleborate == 'kpsc' || params.kleborate == 'kosc'){
     //   KLEBORATE_RESULTS = run_kleborate(PROKKA_RESULTS.genome)
     //}

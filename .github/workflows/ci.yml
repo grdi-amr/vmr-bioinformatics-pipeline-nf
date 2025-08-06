@@ -1,0 +1,52 @@
+name: Nextflow CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run syntax & stub tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v1
+        with:
+          version: latest
+
+      - name: Create dummy directories for databases
+        run: |
+          mkdir -p work/databases/{mobDB,virlencefinder_db,prokka_db,iceberg,phaster}
+          mkdir -p test_output
+
+      - name: Test main pipeline (dry run with stub data)
+        run: |
+          nextflow run pipeline.nf \
+            --contigs "test_data/*.fa" \
+            --card_json work/databases/card.json \
+            --mobDB work/databases/mobDB \
+            --virulencefinderDB work/databases/virlencefinder_db \
+            --icebergDB work/databases/iceberg \
+            --prokkaDB work/databases/prokka_db \
+            --outDir test_output \
+            -profile test -resume -dry-run
+
+      - name: Test database download pipeline with stubs
+        run: |
+          nextflow run download_databases.nf \
+            --download_all true \
+            --overwrite true \
+            -profile test -resume
+
+      - name: List downloaded database stubs
+        run: |
+          echo "Downloaded stubbed database files:"
+          find work/databases
+
