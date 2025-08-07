@@ -1,0 +1,8 @@
+# ete3_env.yml
+name: ete3_env
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.8
+  - ete3
