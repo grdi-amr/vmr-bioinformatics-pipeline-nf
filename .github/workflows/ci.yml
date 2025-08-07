@@ -40,6 +40,7 @@ jobs:
         shell: bash -l {0}
         run: |
           export ETE3_HOME=$PWD/ete3_data
+          NXF_SINGULARITY_CACHEDIR=$PWD/.singularity_cach
           nextflow run download_databases.nf \
             --download_all true \
             --overwrite true \
