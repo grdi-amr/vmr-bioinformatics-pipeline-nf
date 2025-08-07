@@ -43,23 +43,47 @@ jobs:
           nextflow run download_databases.nf \
             --download_all true \
             --overwrite true \
+            -profile singularity,test \
+            -stub-run \
+            -resume
+
+      - name: Test database download pipeline with stubs
+        shell: bash -l {0}
+        run: |
+          export ETE3_HOME=$PWD/ete3_data
+          nextflow run download_databases.nf \
+            --download_all true \
+            --overwrite true \
             -profile singularity,test -resume 
 
-      - name: Test main pipeline (dry run with stub data)
+      - name: Create mock database
+        run: |
+          mkdir -p test_databases/{iceberg,mobDB,phaster,prokka_db,virulencefinder_db}
+          echo '{ "test_gene": { "model_type": "protein homolog model" } }' > test_databases/card.json
+          echo ">seq\nATGC" > test_databases/iceberg/sequences
+          touch test_databases/iceberg/status.txt
+          echo "mobdb test" > test_databases/mobDB/clusters.txt
+          touch test_databases/mobDB/status.txt
+          echo ">phage\nATGC" > test_databases/phaster/sequences
+          touch test_databases/phaster/status.txt
+          touch test_databases/prokka_db/PGAP_NCBI.hmm
+          touch test_databases/prokka_db/status.txt
+          echo ">gene\nATGC" > test_databases/virulencefinder_db/virulence_ecoli.fsa
+          touch test_databases/virulencefinder_db/status.txt
+       - name: Run dry run test of pipeline
         run: |
           nextflow run pipeline.nf \
             --contigs "test_data/*.fa" \
-            --card_json work/databases/card.json \
-            --mobDB work/databases/mobDB \
-            --virulencefinderDB work/databases/virlencefinder_db \
-            --icebergDB work/databases/iceberg \
-            --prokkaDB work/databases/prokka_db \
+            --card_json test_databases/card.json \
+            --mobDB test_databases/mobDB \
+            --virulencefinderDB test_databases/virulencefinder_db \
+            --icebergDB test_databases/iceberg \
+            --prokkaDB test_databases/prokka_db \
             --outDir test_output \
-            -profile singularity,test -resume --dry-run
+            -profile test,singularity --dry-run
 
 
       - name: List downloaded database stubs
         run: |
           echo "Downloaded stubbed database files:"
           find work/databases
-
