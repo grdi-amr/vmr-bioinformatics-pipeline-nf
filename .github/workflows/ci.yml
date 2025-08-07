@@ -44,7 +44,7 @@ jobs:
           nextflow run download_databases.nf \
             --download_all true \
             --overwrite true \
-            -profile singularity,test \
+            -profile ci,test \
             -stub-run \
             -resume
 
