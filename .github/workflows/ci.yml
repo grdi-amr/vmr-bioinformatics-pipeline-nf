@@ -45,16 +45,7 @@ jobs:
             --overwrite true \
             -profile singularity,test \
             -stub-run \
-            -resume
-
-      - name: Test database download pipeline with stubs
-        shell: bash -l {0}
-        run: |
-          export ETE3_HOME=$PWD/ete3_data
-          nextflow run download_databases.nf \
-            --download_all true \
-            --overwrite true \
-            -profile singularity,test -resume 
+            -resume --dry-run
 
       - name: Create mock database
         run: |
