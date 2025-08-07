@@ -70,7 +70,7 @@ jobs:
           touch test_databases/prokka_db/status.txt
           echo ">gene\nATGC" > test_databases/virulencefinder_db/virulence_ecoli.fsa
           touch test_databases/virulencefinder_db/status.txt
-       - name: Run dry run test of pipeline
+      - name: Run dry run test of pipeline
         run: |
           nextflow run pipeline.nf \
             --contigs "test_data/*.fa" \
