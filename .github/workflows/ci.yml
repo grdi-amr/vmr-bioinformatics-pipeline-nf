@@ -40,7 +40,7 @@ jobs:
           miniforge-variant: Mambaforge
           use-mamba: true
       - name: Test database download pipeline with stubs
-        she: bash -l {0}
+        shell: bash -l {0}
         run: |
           export ETE3_HOME=$PWD/ete3_data
           nextflow run download_databases.nf \
