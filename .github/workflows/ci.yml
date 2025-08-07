@@ -45,7 +45,7 @@ jobs:
             --overwrite true \
             -profile singularity,test \
             -stub-run \
-            -resume --dry-run
+            -resume
 
       - name: Create mock database
         run: |

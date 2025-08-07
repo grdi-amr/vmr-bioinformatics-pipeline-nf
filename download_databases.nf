@@ -85,18 +85,24 @@ process download_CARD_json {
     """
     echo Data! > ./card.json
     """
-
+    
 }
 process download_virulencefinder_database {
 
     publishDir params.card_json, mode: 'move', overwrite: true
     input:
 
-     output:
+    output:
     path "virulencefinder_db/*"
-       
+    
+    script:   
     """
     git clone https://bitbucket.org/genomicepidemiology/virulencefinder_db/
+    """
+    stub:
+    """
+    mkdir virulencefinder_db
+    touch virulencefinder_db/virulence.txt
     """
 }
 
