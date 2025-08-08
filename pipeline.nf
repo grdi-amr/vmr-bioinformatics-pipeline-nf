@@ -119,6 +119,7 @@ process runStarAMR {
     """
     stub:
     """
+    mkdir out
     touch out/results.xlsx \
       out/detailed_summary.tsv \
       out/resfinder.tsv \
