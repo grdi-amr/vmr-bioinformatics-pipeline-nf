@@ -252,6 +252,30 @@ process run_refseq_masher{
     fi
 
     """
+    stub:
+    """
+    # Create dummy refseq_masher_results.txt with header + one line
+    if [[ "$(basename $genome)" == SRR26893262* ]]; then
+        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+        echo -e "1\\tSalmonella enterica\\t100" >> refseq_masher_results.txt
+        echo "Salmonella enterica" > kleborate_flag.txt
+    elif [[ "\$filename" == SRR32114460* ]]; then
+        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+        echo -e "1\\tKlebsiella pneumoniae\\t100" >> refseq_masher_results.txt
+        echo "kpsc" > kleborate_flag.txt
+    elif [[ "\$filename" == SRR32428968* ]]; then
+        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+        echo -e "1\\tEscherichia coli\\t100" >> refseq_masher_results.txt
+        echo "virulence_ecoli" > kleborate_flag.txt
+    elif [[ "\$filename" == SRR24127505* ]]; then
+        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+        echo -e "1\\tKlebsiella oxytoca\\t100" >> refseq_masher_results.txt
+        echo "kosc" > kleborate_flag.txt
+    else
+        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+        echo -e "1\\tEnterobacter\\t100" >> refseq_masher_results.txt
+        echo "none" > kleborate_flag.txt
+    """
     
 
 }
@@ -268,6 +292,10 @@ process run_sistr {
     """
     sistr -i $contigs "$flag" -o sistr -f tab
     """
+    stub:
+    """
+    echo -e "genome\tserovar\tantigen\tcgmlst_ST\n\$sample\tEnteritidis\t1,9,12:g,m:-\t1234" > sistr.tab
+    """
 }
 process run_abricate {
     label "ABRICATE"
@@ -280,6 +308,11 @@ process run_abricate {
     script:
     """
     abricate $contigs --db vfdb > amr.vfdb.results.tsv
+    """
+    stub:
+    """
+    echo -e "SEQUENCE\tGENE\t%IDENTITY\t%COVERAGE\tDATABASE" > amr.vfdb.results.tsv
+    echo -e "$sample\tmock_gene\t99.8\t100.0\tvfdb" >> amr.vfdb.results.tsv
     """
 
 
@@ -298,6 +331,12 @@ process run_virulencefinder {
     """
     mkdir -p out
     virulencefinder.py -i "$contigs" -o "out" -d "$flag" -p $params.virulencefinderDB
+    """
+    stub:
+    """
+    mkdir -p out
+    echo -e "Isolate ID\tGene\t%Identity\t%Coverage\tDatabase" > out/mock_virulencefinder.tsv
+    echo -e "$sample\tmock_gene\t99.5\t98.7\t$flag" >> out/mock_virulencefinder.tsv
     """
 
 
@@ -369,6 +408,14 @@ process run_iceberg {
         --threads ${task.cpus} \\
         --out ${sample}_iceberg_blastn_onGenome.txt | \\
     sed -e 's/GENE/ICEBERG_ID/g' > ${sample}_iceberg_blastn_onGenome.summary.txt ;
+    """
+    stub:
+    """
+    ouch ${sample}_iceberg_blastp_onGenes.txt
+    echo -e "ICEBERG_ID\\tidentity\\tcoverage" > ${sample}_iceberg_blastp_onGenes.summary.txt
+
+    touch ${sample}_iceberg_blastn_onGenome.txt
+    echo -e "ICEBERG_ID\\tidentity\\tcoverage" > ${sample}_iceberg_blastn_onGenome.summary.txt
     """    
 
 
@@ -408,6 +455,13 @@ process run_integron_finder{
     for gbk in \$(ls *.gbk) ; do
         cat \$gbk >> ${sample}_integrons.gbk ;
     done
+    """
+    stub:
+    """
+    mkdir -p Results_Integron_Finder_${sample}
+    touch Results_Integron_Finder_${sample}/dummy_output.txt
+    touch ${sample}_integrons.gbk
+    echo 'IntegronFinder vX.X.X' > integronfinder_version.txt
     """   
 
 
@@ -440,6 +494,11 @@ process run_island_path{
           name="\${file%%.gbk}" ;
           awk -v contig=\$name 'BEGIN { FS = "\\t"; OFS="\\t" } { print contig,\$2,\$3 }' \${file%%.gbk}_GIs.txt >> ${sample}_predicted_GIs.bed ;
         done
+    """
+    stub:
+    """
+    touch ${sample}_predicted_GIs.bed
+    echo -e "${sample}\t0\t1000" > ${sample}_predicted_GIs.bed
     """
 
 
@@ -489,6 +548,14 @@ process run_digis{
      -f fasta-aa \\
      --fasta $genome \\
      --fasta_features transposable_element > digIS/results/fastas/${sample}_IS.faa ;
+   """
+   stub:
+   """
+   mkdir -p digIS/results/fastas
+   touch digIS/results/${sample}.gff
+   cp digIS/results/${sample}.gff ${sample}_IS.gff
+   touch digIS/results/fastas/${sample}_IS.fa
+   touch digIS/results/fastas/${sample}_IS.faa
    """
 }
 process run_RGI { 
@@ -591,6 +658,7 @@ process merge_tables {
     python $projectDir/bin/merge.py ${tables[0]} ${tables[1]}
 
     """
+    
 }
 process json_generator {
     label "RGI"
