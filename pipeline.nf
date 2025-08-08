@@ -304,6 +304,10 @@ process run_sistr {
     """
     echo -e "genome\tserovar\tantigen\tcgmlst_ST\n\$sample\tEnteritidis\t1,9,12:g,m:-\t1234" > sistr.tab
     """
+    stub:
+    """
+    echo -e "genome\tserovar\tantigen\tcgmlst_ST\n$sample\tEnteritidis\t1,9,12:g,m:-\t1234" > sistr.tab
+    """
 }
 process run_abricate {
     label "ABRICATE"
