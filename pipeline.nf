@@ -117,6 +117,16 @@ process runStarAMR {
     fi
     staramr search -o out  $contigs  
     """
+    stub:
+    """
+    touch out/results.xlsx \
+      out/detailed_summary.tsv \
+      out/resfinder.tsv \
+      out/plasmidfinder.tsv \
+      out/mlst.tsv \
+      out/settings.txt \
+      out/pointfinder.tsv
+    """
 }
 process run_ectyper {
     label "ECTYPER"
@@ -129,6 +139,12 @@ process run_ectyper {
     script:
     """
     ectyper -i $contigs -o out
+    """
+    stub:
+    """
+    mkdir -p out
+    echo -e "Isolate\tSerotype" > out/output.tsv
+    echo -e "${sample}\tO157:H7" >> out/output.tsv
     """
 }
 process run_kleborate {
@@ -143,6 +159,11 @@ process run_kleborate {
     script:
     """
     kleborate -a $contigs -o out -p "$flag"
+    """
+    stub:
+    """
+    mkdir -p out
+    echo "This is a stub result for sample: $sample" > out/${sample}_kleborate.txt
     """
 }
 process run_prokka{
@@ -178,6 +199,15 @@ process run_prokka{
         --strain \"${sample}\" \\
         cleaned_header.fasta
     rm -r prokka_db
+    """
+    stub:
+    """
+    mkdir -p annotation
+    echo "##gff-stub" > annotation/${sample}.gff
+    echo "##gbk-stub" > annotation/${sample}.gbk
+    echo ">genome-sequence-stub" > annotation/${sample}.fna
+    echo ">protein-sequence-stub" > annotation/${sample}.faa
+    echo ">gene-sequence-stub" > annotation/${sample}.ffn
     """
 
 
