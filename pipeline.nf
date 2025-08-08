@@ -670,7 +670,10 @@ process merge_tables {
     python $projectDir/bin/merge.py ${tables[0]} ${tables[1]}
 
     """
-    
+    stub:
+    """
+    touch merged_tables.csv
+    """
 }
 process json_generator {
     label "RGI"
