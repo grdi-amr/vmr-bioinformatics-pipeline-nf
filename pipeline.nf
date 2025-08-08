@@ -287,6 +287,11 @@ process load_RGI_database {
     rgi load --local --card_json $card_json 
 
     """
+    stub:
+    """
+    mkdir -p localDB
+    echo "stubbed" > localDB/dummy.txt
+    """
 
 }
 
