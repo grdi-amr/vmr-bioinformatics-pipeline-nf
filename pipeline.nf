@@ -419,7 +419,7 @@ process run_iceberg {
     """
     stub:
     """
-    ouch ${sample}_iceberg_blastp_onGenes.txt
+    touch ${sample}_iceberg_blastp_onGenes.txt
     echo -e "ICEBERG_ID\\tidentity\\tcoverage" > ${sample}_iceberg_blastp_onGenes.summary.txt
 
     touch ${sample}_iceberg_blastn_onGenome.txt
