@@ -72,7 +72,7 @@ jobs:
             --icebergDB test_databases/iceberg \
             --prokkaDB test_databases/prokka_db \
             --outDir test_output \
-            -profile test,singularity --dry-run
+            -profile test,ci -stub-run
 
 
       - name: List downloaded database stubs
