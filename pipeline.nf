@@ -254,27 +254,35 @@ process run_refseq_masher{
     """
     stub:
     """
-    # Create dummy refseq_masher_results.txt with header + one line
-    if [[ "$(basename $genome)" == SRR26893262* ]]; then
-        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
-        echo -e "1\\tSalmonella enterica\\t100" >> refseq_masher_results.txt
-        echo "Salmonella enterica" > kleborate_flag.txt
-    elif [[ "\$filename" == SRR32114460* ]]; then
-        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
-        echo -e "1\\tKlebsiella pneumoniae\\t100" >> refseq_masher_results.txt
-        echo "kpsc" > kleborate_flag.txt
-    elif [[ "\$filename" == SRR32428968* ]]; then
-        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
-        echo -e "1\\tEscherichia coli\\t100" >> refseq_masher_results.txt
-        echo "virulence_ecoli" > kleborate_flag.txt
-    elif [[ "\$filename" == SRR24127505* ]]; then
-        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
-        echo -e "1\\tKlebsiella oxytoca\\t100" >> refseq_masher_results.txt
-        echo "kosc" > kleborate_flag.txt
-    else
-        echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
-        echo -e "1\\tEnterobacter\\t100" >> refseq_masher_results.txt
-        echo "none" > kleborate_flag.txt
+    filename=\$(basename \$genome)
+
+    case "\$filename" in
+        SRR26893262*)
+            echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+            echo -e "1\\tSalmonella enterica\\t100" >> refseq_masher_results.txt
+            echo "Salmonella enterica" > kleborate_flag.txt
+            ;;
+        SRR32114460*)
+            echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+            echo -e "1\\tKlebsiella pneumoniae\\t100" >> refseq_masher_results.txt
+            echo "kpsc" > kleborate_flag.txt
+            ;;
+        SRR32428968*)
+            echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+            echo -e "1\\tEscherichia coli\\t100" >> refseq_masher_results.txt
+            echo "virulence_ecoli" > kleborate_flag.txt
+            ;;
+        SRR24127505*)
+           echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+           echo -e "1\\tKlebsiella oxytoca\\t100" >> refseq_masher_results.txt
+           echo "kosc" > kleborate_flag.txt
+           ;;
+        *)
+           echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
+           echo -e "1\\tEnterobacter\\t100" >> refseq_masher_results.txt
+           echo "none" > kleborate_flag.txt
+           ;;
+    esac
     """
     
 
