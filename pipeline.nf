@@ -255,9 +255,8 @@ process run_refseq_masher{
     """
     stub:
     """
-    filename=\$(basename \$genome)
-
-    case "\$filename" in
+    
+    case "${sample}" in
         SRR26893262*)
             echo -e "rank\\tname\\tscore" > refseq_masher_results.txt
             echo -e "1\\tSalmonella enterica\\t100" >> refseq_masher_results.txt
