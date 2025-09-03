@@ -156,10 +156,14 @@ process run_kleborate {
     tuple val(sample), path(contigs), val(flag)
     
     output:
-    tuple val(sample), path("out/*"), emit: keblorate_txt
+    tuple val(sample), path("out/*",optional: true), emit: keblorate_txt
     script:
     """
-    kleborate -a $contigs -o out -p "$flag"
+    mkdir -p out
+    kleborate -a $contigs -o out -p "$flag" || true
+    if [ -z "\$(ls -A out)" ]; then
+        echo "No result for $sample" > out/${sample}_kleborate.txt
+    fi
     """
     stub:
     """
