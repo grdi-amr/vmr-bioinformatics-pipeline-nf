@@ -241,21 +241,30 @@ process run_refseq_masher{
       --top-n-results 10 \\
       --output-type tab \\
       $genome > refseq_masher_results.txt
-    top_hit=\$(tail -n +2 "refseq_masher_results.txt" | head -n 1 | cut -f2)
-    if echo "\$top_hit" | grep -E "Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola"; then
-        echo "kpsc" > kleborate_flag.txt
-    elif echo "\$top_hit" | grep -E "Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis"; then
-         echo "kosc" > kleborate_flag.txt
-    elif echo "\$top_hit" | grep -E "Escherichia coli"; then
-         echo "virulence_ecoli" > kleborate_flag.txt
-    elif echo "\$top_hit" | grep -E "Salmonella enterica"; then
-         echo "Salmonella enterica" > kleborate_flag.txt
-    elif echo "\$top_hit" | grep -E "Salmonella bongori"; then
-         echo "Salmonella bongori" > kleborate_flag.txt
-    else
-        echo "none" > kleborate_flag.txt
-    fi
-
+      awk 'BEGIN {FS="\\t"}
+         NR==2 {top_hit=\$2} 
+         NR==3 {second_hit=\$2}
+         END {
+           if (top_hit ~ /Klebsiella sp\\./) {
+             hit = second_hit
+           } else {
+             hit = top_hit
+           }
+           if (hit ~ /Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola/) {
+             print "kpsc"
+           } else if (hit ~ /Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis/) {
+             print "kosc"
+           } else if (hit ~ /Escherichia coli/) {
+             print "virulence_ecoli"
+           } else if (hit ~ /Salmonella enterica/) {
+             print "Salmonella enterica"
+           } else if (hit ~ /Salmonella bongori/) {
+             print "Salmonella bongori"
+           } else {
+             print "none"
+           }
+           print "Debug: Top hit = " hit > "/dev/stderr"
+         }' refseq_masher_results.txt > kleborate_flag.txt
     """
     stub:
     """
@@ -679,47 +688,6 @@ process merge_tables {
     touch merged_tables.csv
     """
 }
-process json_generator {
-    label "RGI"
-    publishDir "${params.outDir}", mode: 'copy'
-    cache 'none'
-
-    // This process runs after all samples are processed, taking only the directory as an argument
-    input:
-    path tables
-
-    output:
-    path("results_summary.json"), emit: json_out
-    script:
-    """
-    python $projectDir/bin/json_generator.py ${params.outDir}
-    """
-}
-
-process create_report {
-    label "RGI"
-    publishDir "${params.outDir}"
-    cache false
-
-    input: 
-    path(table)
-
-    output: 
-    path('report.html'), emit: out
-
-    script: 
-    """
-    #!/usr/bin/env Rscript 
-
-    rmarkdown::render(
-        input = "${projectDir}/bin/generate_report.rmd",
-        params = list(data = "${table}"),
-        output_file = "report.html",
-        knit_root_dir = getwd(),
-        output_dir = getwd()
-        )
-    """
-}
 
 workflow {
     def ECTYPER_RESULTS = Channel.empty()
@@ -843,9 +811,5 @@ workflow {
                              skip: 1, 
                              name: 'Mob_rgi_contig_results.csv', 
                              storeDir: params.outDir )
-    //TOTAL_JSON = json_generator(CAT_TAB)
-   
-    // Create report
-//    create_report(CAT_TAB)
 } 
 
