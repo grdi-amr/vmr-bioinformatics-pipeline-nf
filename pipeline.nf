@@ -139,7 +139,8 @@ process run_ectyper {
     tuple val(sample), path("out/output.tsv"), emit: ectyper_tsv    
     script:
     """
-    ectyper -i $contigs -o out
+    mkdir temp_db
+    ectyper -i $contigs --pathotype  -o out
     """
     stub:
     """
