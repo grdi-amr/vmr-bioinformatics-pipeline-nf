@@ -243,28 +243,26 @@ process run_refseq_masher{
       --output-type tab \\
       $genome > refseq_masher_results.txt
       awk 'BEGIN {FS="\\t"}
-         NR==2 {top_hit=\$2} 
-         NR==3 {second_hit=\$2}
+         NR==2 {h[1]=\$2}
+         NR==3 {h[2]=\$2}
+         NR==4 {h[3]=\$2}
          END {
-           if (top_hit ~ /Klebsiella sp\\./) {
-             hit = second_hit
-           } else {
-             hit = top_hit
+           hit=h[1]
+
+           for (i=1; i<=3; i++) {
+             if (h[i] ~ /Escherichia coli|Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola|Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis|Salmonella enterica|Salmonella bongori/) {
+               hit=h[i]; break
+             }
            }
-           if (hit ~ /Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola/) {
-             print "kpsc"
-           } else if (hit ~ /Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis/) {
-             print "kosc"
-           } else if (hit ~ /Escherichia coli/) {
-             print "virulence_ecoli"
-           } else if (hit ~ /Salmonella enterica/) {
-             print "Salmonella enterica"
-           } else if (hit ~ /Salmonella bongori/) {
-             print "Salmonella bongori"
-           } else {
-             print "none"
-           }
-           print "Debug: Top hit = " hit > "/dev/stderr"
+
+           if (hit ~ /Klebsiella pneumoniae|Klebsiella quasipneumoniae|Klebsiella variicola/) print "kpsc"
+           else if (hit ~ /Klebsiella oxytoca|Klebsiella michiganensis|Klebsiella grimontii|Klebsiella pasteurii|Klebsiella huaxiensis/) print "kosc"
+           else if (hit ~ /Escherichia coli/) print "virulence_ecoli"
+           else if (hit ~ /Salmonella enterica/) print "Salmonella enterica"
+           else if (hit ~ /Salmonella bongori/) print "Salmonella bongori"
+           else print "none"
+
+           print "Debug: h1=" h[1] " | h2=" h[2] " | h3=" h[3] " | chosen=" hit > "/dev/stderr"
          }' refseq_masher_results.txt > kleborate_flag.txt
     """
     stub:
@@ -356,6 +354,7 @@ process run_virulencefinder {
     script:
     """
     mkdir -p out
+    # pip install --no-cache-dir --force-reinstall --upgrade "pandas>=2.2.2" "numpy>=2.2.0" "matplotlib>=3.9.2"
     virulencefinder.py -i "$contigs" -o "out" -d "$flag" -p $params.virulencefinderDB
     """
     stub:
@@ -558,7 +557,8 @@ process run_digis{
    sed \\
      -e 's/id=/ID=/g' \\
      digIS/results/${sample}.gff > ${sample}_IS.gff ;
-
+   
+   # pip install --no-cache-dir --force-reinstall --upgrade "pandas>=2.2.2" "numpy>=2.2.0" "matplotlib>=3.9.2"
    ## get nucl sequences
    gff-toolbox \\
      convert \\
