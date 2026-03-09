@@ -28,7 +28,9 @@ params.sistr = false
 params.vfinder = ""
 // Parameters to activate kleborate
 //params.kleborate = false
-
+// Parameters to accept mikrokondo mobsuite
+params.mob_recon_dir = ""
+params.mob_suffix = "contig_report.mob.recon.annotation.filled.txt"
 // Help
 params.help = false
 
@@ -604,6 +606,7 @@ process run_RGI {
         --local \
         --num_threads ${task.cpus} \
         --input_sequence $contigs \
+        --alignment_tool DIAMOND \
         --output_file "rgi_results"
 
     """ 
@@ -656,7 +659,7 @@ process run_mobSuite {
       --infile $contigs \
       --outdir mobSuite \
       --num_threads 1 \
-      --database_directory $params.mobDB \
+      ##--database_directory $params.mobDB \
       --force 
 
     """
@@ -681,7 +684,9 @@ process merge_tables {
 
     script: 
     """
-    python $projectDir/bin/merge.py ${tables[0]} ${tables[1]}
+    echo "Contig report: ${tables[1]}"
+    echo "RGI: ${tables[0]}"
+    python $projectDir/bin/merge.py ${tables[0]} ${tables[1]} ${sample}
 
     """
     stub:
@@ -773,7 +778,34 @@ workflow {
     ISLAND_PATH_RESULTS = run_island_path(PROKKA_RESULTS.gbk)
     DIGIS_RESULTS = run_digis(PROKKA_RESULTS.genome.join(PROKKA_RESULTS.gbk))
    // Run mob_recon on the contigs.
+    MOB_EXTERNAL = Channel.empty()
+
+    if (params.mob_recon_dir) {
+
+        MOB_EXTERNAL = Channel
+           .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
+           .map { file ->
+              def sample = file.parent.name
+              tuple(sample, file)
+           }
+
+    }
+    if (params.mob_recon_dir) {
+    log.info "Using external MOB-suite results from: ${params.mob_recon_dir}"
+
+    MOB_RESULTS = Channel
+       .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
+       .map { file ->
+           def sample = file.parent.name
+           // wrap in a map with key 'contig_table'
+           tuple(sample, [contig_table: file])
+       }
+    } else {
+    log.info "Running MOB-suite (mob_recon)"
     MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
+    }
+
+    //MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
     // Run star_amr
     STARAMR_RESULTS=runStarAMR(PROKKA_RESULTS.genome)
     // Run Abricate
@@ -797,20 +829,50 @@ workflow {
     }
 
     // Create channel with tables to be combined
-    TABLES = RGI_RESULTS.table 
-                .concat(MOB_RESULTS.contig_table)
-                .groupTuple(size: 2)
+   // TABLES = RGI_RESULTS.table 
+   //             .concat(MOB_RESULTS.contig_table)
+   //             .groupTuple(size: 2)
+    
+   // Map MOB_RESULTS to get contig_table channel for the merge
+      MOB_CONTIG_TABLE = Channel
+        .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
+        .map { file ->
+  //      println "FOUND MOB FILE: $file"
+        def sample = file.parent.name
+        tuple(sample, file)
+    }
+//    RGI_RESULTS.table.view { "RGI sample -> ${it[0]}" }
+//    MOB_CONTIG_TABLE.view { "MOB sample -> ${it[0]}" }
+    MERGE_INPUT = RGI_RESULTS.table
+              .join(MOB_CONTIG_TABLE)
+              .map { sample, rgi_file, mob_file -> 
+                  tuple(sample, [rgi_file, mob_file])
+              }
 
+    MERGE_INPUT.view { sample, files ->
+    println "Merging sample: $sample"
+    println "  RGI file: ${files[0]}"
+    println "  MOB file: ${files[1]}"
+    }
+    MERGED = merge_tables(MERGE_INPUT)
     // Merge the tables using an included script
-    MERGE_TAB = merge_tables(TABLES)
-
+    //MERGE_TAB = merge_tables(TABLES)
+    CAT_TAB = MERGED
+           .flatten()              // make it a single stream
+           .collectFile(           // combine all CSVs
+               name: 'Mob_rgi_contig_results.csv',
+               keepHeader: true,
+               skip: 1,
+               storeDir: params.outDir
+           )
     // This operation concatenates the CSV files, but leaves just one header at 
     // the top
  
-    CAT_TAB = MERGE_TAB.out
-                .collectFile(keepHeader: true, 
-                             skip: 1, 
-                             name: 'Mob_rgi_contig_results.csv', 
-                             storeDir: params.outDir )
+//    CAT_TAB = MERGED.out
+//                .collectFile(keepHeader: true, 
+ //                            skip: 1, 
+ //                            name: 'Mob_rgi_contig_results.csv', 
+ //                            storeDir: params.outDir )
 } 
+
 

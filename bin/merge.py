@@ -1,69 +1,56 @@
-import numpy as np 
-import pandas as pd 
-import re 
+import pandas as pd
+import re
 import sys
 
-# Arguments, make sure that the RGI table is the first argument, and the
-# mobsuite database is second
+# Improved contig normalization
+def normalize_contig(name):
+    # Take first whitespace-separated part
+    name = name.split()[0]
+    # Remove coverage info
+    name = re.sub(r'_cov_[0-9.]+', '', name)
+    # Remove multiple pilon suffixes
+    name = re.sub(r'(_pilon)+', '', name)
+    # Keep NODE_X_length_YYYYYY intact, remove trailing numbers after length
+    # Match pattern: NODE_<num>_length_<num>_optionalExtra -> NODE_<num>_length_<num>
+    m = re.match(r'(NODE_\d+_length_\d+)', name)
+    if m:
+        name = m.group(1)
+    return name
+
+# Arguments: RGI table, MOB table, Sample name
 rgi_path = sys.argv[1]
 mob_path = sys.argv[2]
+sample = sys.argv[3]
 
-# Read both tables into memory
+
+
+# Read tables
 rgi_df = pd.read_table(rgi_path)
 mob_df = pd.read_table(mob_path)
 
-# RGI ouputs a string at the end of the contig IDs, e.g., _423. Thus, a regex
-# is needed to convert the contig name back to its original, in order to
-# properly join the results together.
-new_contig = list()
-for x in rgi_df['Contig']:
-    y = re.sub(pattern='_[0-9]+\s{0,}$',
-               repl='',
-               string=x)
-    new_contig.append(y)
-rgi_df['Contig'] = new_contig
 
+rgi_df['Contig'] = rgi_df['Contig'].apply(normalize_contig)
+mob_df['contig_id'] = mob_df['contig_id'].apply(normalize_contig)
+mob_df.rename(columns={'contig_id': 'Contig'}, inplace=True)
+#mob_df['contig_id'] = mob_df['contig_id'].apply(normalize_contig)
+#print("RGI contigs:", set(rgi_df['Contig']))
+#print("MOB contigs:", set(mob_df['Contig']))
+#print("Intersection:", set(rgi_df['Contig']) & set(mob_df['Contig']))
+#print(set(mob_df['Contig']) & set(rgi_df['Contig']))
+# Rename MOB contig column for merge
+#mob_df.rename(columns={'contig_id': 'Contig'}, inplace=True)
 
-# Mob-suite reads the contig name the full string, but RGI ignores the string
-# after the first whitespace. We will adjust this in the mob-suite output.
-mob_new_contig = list()
-for x in mob_df['contig_id']: 
-    l = x.split()
-    mob_new_contig.append(l[0])
-mob_df['contig_id'] = mob_new_contig
+# Merge RGI and MOB: keeps all MOB columns
+merged_df = pd.merge(
+    left=rgi_df,
+    right=mob_df,
+    on='Contig',
+    how='left',         # keeps all RGI rows
+    validate='many_to_one'
+)
 
-# Pandas needs a common column name to join under, so we will change the name
-# of the field in the mob results. Rename sample_id as well, it will move to
-# the front of the ouput.
-mob_df.rename(columns={'contig_id': 'Contig', 'sample_id': 'Sample'}, inplace=True)
+# Insert sample name
+merged_df.insert(0, 'Sample', sample)
 
-# Before merging, make sure that the mobsuite contig names match up to the RGI
-# contig names 
-#if not set(rgi_df['Contig']).issubset(set(mob_df['Contig'])):
-#    raise Exception(
-"""
-The contig names of the MOB-suite results are not a subset of the contig 
-names of the RGI results.
-"""
-#)
-
-# Merge the results by performing a left join. RGI results appear first in the
-# final table. There should be no duplication of Contigs in the mobDB, but
-# there may be many ORFs per contig in the RGI results, so we set the
-# many_to_one validation method.
-merged_df = pd.merge(left=rgi_df, 
-                     right=mob_df, 
-                     on='Contig', 
-                     how='left', 
-                     validate='many_to_one')
-
-# Add the Sample column from the mob-suite output to the very front, it just
-# feels more natural.
-col = merged_df.pop("Sample")
-merged_df.insert(0, col.name, col)
-
-# Output a file
-merged_df.to_csv(path_or_buf='merged_tables.csv', 
-                 sep=',', 
-                 index=False)
-
+# Save output
+merged_df.to_csv('merged_tables.csv', sep=',', index=False)
