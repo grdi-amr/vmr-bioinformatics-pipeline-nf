@@ -661,6 +661,39 @@ process run_mobSuite {
       --num_threads 1 \
       ##--database_directory $params.mobDB \
       --force 
+    # Only fix predicted_mobility if mobtyper results exist
+    if [ -f mobSuite/mobtyper_results.txt ]; then
+
+    python << 'EOF'
+    import pandas as pd
+
+    contig="mobSuite/contig_report.txt"
+    typer="mobSuite/mobtyper_results.txt"
+
+    contig_df = pd.read_table(contig)
+    typer_df = pd.read_table(typer)
+
+    # Extract plasmid ID (AA047 etc)
+    typer_df["primary_cluster_id"] = typer_df["sample_id"].str.split(":").str[-1]
+
+    mobility_map = dict(zip(
+       typer_df["primary_cluster_id"],
+       typer_df["predicted_mobility"]
+    ))
+
+    # Fill predicted_mobility in contig_report
+    if "primary_cluster_id" in contig_df.columns:
+        contig_df["predicted_mobility"] = contig_df.apply(
+            lambda r: mobility_map.get(r["primary_cluster_id"], r["predicted_mobility"]),
+            axis=1
+        )
+
+    contig_df.to_csv(contig, sep="\\t", index=False)
+    EOF
+
+    else
+       echo "No mobtyper_results.txt found — skipping mobility fix"
+    fi
 
     """
     stub: 
@@ -834,13 +867,14 @@ workflow {
    //             .groupTuple(size: 2)
     
    // Map MOB_RESULTS to get contig_table channel for the merge
-      MOB_CONTIG_TABLE = Channel
-        .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
-        .map { file ->
+      MOB_CONTIG_TABLE = MOB_RESULTS.contig_table
+//      MOB_CONTIG_TABLE = Channel
+//       .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
+//        .map { file ->
   //      println "FOUND MOB FILE: $file"
-        def sample = file.parent.name
-        tuple(sample, file)
-    }
+//        def sample = file.parent.name
+//        tuple(sample, file)
+//    }
 //    RGI_RESULTS.table.view { "RGI sample -> ${it[0]}" }
 //    MOB_CONTIG_TABLE.view { "MOB sample -> ${it[0]}" }
     MERGE_INPUT = RGI_RESULTS.table
