@@ -7,6 +7,12 @@ params.card_json = "$workDir/databases/card.json"
 params.virulencefinderDB = "$workDir/databases/virulencefinder_db"
 params.icebergDB = "$workDir/databases/iceberg"
 params.prokkaDB = "$workDir/databases/prokka_db"
+params.bacmet2DB = "$workDir/databases/bacmet2_abricate_db"
+params.phasterDB = "$workDir/databases/phaster"
+
+// BLAST parameters for MGE detection
+params.blast_MGEs_minid  = 35
+params.blast_MGEs_mincov = 80
 
 
 // Full RGI or on plasmids only?
@@ -330,18 +336,22 @@ process run_abricate {
     input:
     tuple val(sample), path(contigs)
     output:
-    tuple val(sample), path("amr.vfdb.results.tsv"), emit: vfdb_tsv
+    tuple val(sample), path("amr.vfdb.results.tsv"),              emit: vfdb_tsv
+    tuple val(sample), path("amr.bacmet2_confirmed.results.tsv"), emit: bacmet2_confirmed_tsv
+    tuple val(sample), path("amr.bacmet2_predicted.results.tsv"), emit: bacmet2_predicted_tsv
     script:
     """
     abricate $contigs --db vfdb > amr.vfdb.results.tsv
+    abricate $contigs --db bacmet2_confirmed --datadir ${params.bacmet2DB} > amr.bacmet2_confirmed.results.tsv
+    abricate $contigs --db bacmet2_predicted  --datadir ${params.bacmet2DB} > amr.bacmet2_predicted.results.tsv
     """
     stub:
     """
     echo -e "SEQUENCE\tGENE\t%IDENTITY\t%COVERAGE\tDATABASE" > amr.vfdb.results.tsv
     echo -e "$sample\tmock_gene\t99.8\t100.0\tvfdb" >> amr.vfdb.results.tsv
+    cp amr.vfdb.results.tsv amr.bacmet2_confirmed.results.tsv
+    cp amr.vfdb.results.tsv amr.bacmet2_predicted.results.tsv
     """
-
-
 }
 
 process run_virulencefinder {
@@ -447,6 +457,39 @@ process run_iceberg {
 
 
 }
+process run_phaster {
+    label = [ 'misc', 'process_low' ]
+    publishDir "${params.outDir}/$sample/PHASTER"
+    cpus params.num_threads
+
+    input:
+    tuple val(sample), file(genes_aa)
+
+    output:
+    tuple val(sample), path("${sample}_phaster_blastp_onGenes.summary.txt"), emit: genes_summary
+    tuple val(sample), path("${sample}_phaster_blastp_onGenes.txt"),         emit: results
+    tuple val(sample), path('*.txt'), emit: all
+
+    script:
+    """
+    # PHAST has protein database
+    python $projectDir/bin/run_blasts.py \\
+        blastp \\
+        --query $genes_aa \\
+        --db ${params.phasterDB}/diamond.dmnd \\
+        --minid ${params.blast_MGEs_minid} \\
+        --mincov ${params.blast_MGEs_mincov} \\
+        --threads $task.cpus \\
+        --out ${sample}_phaster_blastp_onGenes.txt --2way | \\
+    sed -e 's/GENE/PHASTER_ID/g' > ${sample}_phaster_blastp_onGenes.summary.txt
+    """
+    stub:
+    """
+    touch ${sample}_phaster_blastp_onGenes.txt
+    echo -e "PHASTER_ID\\tidentity\\tcoverage" > ${sample}_phaster_blastp_onGenes.summary.txt
+    """
+}
+
 process run_integron_finder{
     label "INTEGRON_FINDER"
     publishDir "${params.outDir}/$sample/INTEGRON_FINDER"
@@ -737,7 +780,7 @@ workflow {
     // Get the Contigs into a channel
     CONTIGS = Channel
                 .fromPath(params.contigs)
-                .map { file -> tuple(file.baseName, file) }
+                .map { file -> tuple(file.baseName.replaceAll(/\.final\.filtered\.assembly$/, ''), file) }
     //Run_Prokka
     PROKKA_RESULTS = run_prokka(CONTIGS)
     MASHER_RESULTS = run_refseq_masher (PROKKA_RESULTS.genome)
@@ -807,36 +850,57 @@ workflow {
     }
     //Run Iceberg
     ICEBERG_RESULTS = run_iceberg(PROKKA_RESULTS.proteins, PROKKA_RESULTS.genome)
+    // Run Phaster (prophage/phage protein BLAST)
+    PHASTER_RESULTS = run_phaster(PROKKA_RESULTS.proteins)
     INTEGRON_FINDER_RESULTS =run_integron_finder(PROKKA_RESULTS.genome)
     ISLAND_PATH_RESULTS = run_island_path(PROKKA_RESULTS.gbk)
     DIGIS_RESULTS = run_digis(PROKKA_RESULTS.genome.join(PROKKA_RESULTS.gbk))
    // Run mob_recon on the contigs.
     MOB_EXTERNAL = Channel.empty()
-
     if (params.mob_recon_dir) {
 
-        MOB_EXTERNAL = Channel
-           .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
-           .map { file ->
-              def sample = file.parent.name
-              tuple(sample, file)
-           }
+        log.info "Using external MOB-suite results from: ${params.mob_recon_dir}"
 
-    }
-    if (params.mob_recon_dir) {
-    log.info "Using external MOB-suite results from: ${params.mob_recon_dir}"
+         MOB_CONTIG_TABLE = Channel
+            .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
+            .filter { it.exists() }
+            .map { file ->
+                 def sample = file.parent.name
+                 tuple(sample, file)
+            }
 
-    MOB_RESULTS = Channel
-       .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
-       .map { file ->
-           def sample = file.parent.name
-           // wrap in a map with key 'contig_table'
-           tuple(sample, [contig_table: file])
-       }
     } else {
-    log.info "Running MOB-suite (mob_recon)"
-    MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
+
+        log.info "Running MOB-suite (mob_recon)"
+
+        MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
+
+        MOB_CONTIG_TABLE = MOB_RESULTS.contig_table
     }
+//    if (params.mob_recon_dir) {
+
+//        MOB_EXTERNAL = Channel
+//           .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
+//           .map { file ->
+//               def sample = file.parent.name
+//            tuple(sample, file)
+//           }
+
+//    }
+//    if (params.mob_recon_dir) {
+//    log.info "Using external MOB-suite results from: ${params.mob_recon_dir}"
+
+//    MOB_RESULTS = Channel
+//       .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
+//      .map { file ->
+//           def sample = file.parent.name
+           // wrap in a map with key 'contig_table'
+//           tuple(sample, [contig_table: file])
+//       }
+//    } else {
+//    log.info "Running MOB-suite (mob_recon)"
+//    MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
+//    }
 
     //MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
     // Run star_amr
@@ -867,7 +931,7 @@ workflow {
    //             .groupTuple(size: 2)
     
    // Map MOB_RESULTS to get contig_table channel for the merge
-      MOB_CONTIG_TABLE = MOB_RESULTS.contig_table
+//    MOB_CONTIG_TABLE = MOB_RESULTS.contig_table
 //      MOB_CONTIG_TABLE = Channel
 //       .fromPath("${params.mob_recon_dir}/*/*${params.mob_suffix}")
 //        .map { file ->
@@ -877,12 +941,17 @@ workflow {
 //    }
 //    RGI_RESULTS.table.view { "RGI sample -> ${it[0]}" }
 //    MOB_CONTIG_TABLE.view { "MOB sample -> ${it[0]}" }
+    RGI_RESULTS.table.view { "RGI sample -> ${it[0]}" }
+    if (MOB_CONTIG_TABLE != null) {
+      MOB_CONTIG_TABLE.view { "MOB sample -> ${it[0]}" }
+    } else {
+      log.warn "MOB_CONTIG_TABLE is null!"
+    }   
     MERGE_INPUT = RGI_RESULTS.table
               .join(MOB_CONTIG_TABLE)
               .map { sample, rgi_file, mob_file -> 
                   tuple(sample, [rgi_file, mob_file])
               }
-
     MERGE_INPUT.view { sample, files ->
     println "Merging sample: $sample"
     println "  RGI file: ${files[0]}"
@@ -899,14 +968,6 @@ workflow {
                skip: 1,
                storeDir: params.outDir
            )
-    // This operation concatenates the CSV files, but leaves just one header at 
-    // the top
- 
-//    CAT_TAB = MERGED.out
-//                .collectFile(keepHeader: true, 
- //                            skip: 1, 
- //                            name: 'Mob_rgi_contig_results.csv', 
- //                            storeDir: params.outDir )
 } 
 
 

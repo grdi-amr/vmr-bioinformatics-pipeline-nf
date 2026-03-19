@@ -6,6 +6,7 @@ params.virulencefinderDB = "$workDir/databases/virlencefinder_db"
 params.prokkaDB = "$workDir/databases/prokka_db"
 params.iceberg = "$workDir/databases/iceberg"
 params.phaster = "$workDir/databases/phaster"
+params.bacmet2DB = "$workDir/databases/bacmet2_abricate_db"
 
 // Database download controls
 params.download_mobDB = false
@@ -14,6 +15,7 @@ params.download_vfDB = false
 params.download_prokkaDB = false
 params.download_iceberg = false
 params.download_phaster = false
+params.download_bacmet2 = false
 params.download_all = false
 params.overwrite = false
 
@@ -51,6 +53,11 @@ if ( params.download_all | params.download_phaster ){
 } else {
     DL_phast = false
 }
+if ( params.download_all | params.download_bacmet2 ){
+    DL_bacmet2 = true
+} else {
+    DL_bacmet2 = false
+}
 // Log message
 log.info """ 
 
@@ -62,6 +69,7 @@ log.info """
     Prokka database: ${DL_prokka}
     Iceberg database: ${DL_iceberg}
     Phaster database: ${DL_phast}
+    BacMet2 abricate databases: ${DL_bacmet2}
 """.stripIndent(true)
 
 
@@ -403,6 +411,56 @@ workflow download_VF_WF {
 
 }
 
+process download_bacmet2_database {
+    label "ABRICATE"
+    publishDir params.bacmet2DB, mode: 'move', overwrite: true
+
+    output:
+    path "bacmet2_confirmed/"
+    path "bacmet2_predicted/"
+
+    script:
+    """
+    # BacMet2 confirmed (experimentally verified) database
+    mkdir -p bacmet2_confirmed
+    wget --tries=10 -O bacmet2_confirmed/sequences \\
+        http://bacmet.biomedicine.gu.se/download/BacMet2_EXP_database.fasta
+
+    # BacMet2 predicted database (gzipped)
+    mkdir -p bacmet2_predicted
+    wget --tries=10 -O bacmet2_predicted.fasta.gz \\
+        http://bacmet.biomedicine.gu.se/download/BacMet2_predicted_database.fasta.gz
+    gunzip -c bacmet2_predicted.fasta.gz > bacmet2_predicted/sequences
+
+    # Build BLAST indexes for both databases
+    abricate --setupdb --datadir .
+    """
+    stub:
+    """
+    mkdir -p bacmet2_confirmed bacmet2_predicted
+    touch bacmet2_confirmed/sequences bacmet2_predicted/sequences
+    """
+}
+
+workflow download_BACMET2_WF {
+    bacmet2DB_dir = file(params.bacmet2DB)
+    if ( !bacmet2DB_dir.exists() || bacmet2DB_dir.isEmpty() ){
+        println "Downloading BacMet2 databases for abricate, please wait"
+        download_bacmet2_database()
+    } else {
+        if ( params.overwrite ){
+            println (
+                "WARNING: Contents of $params.bacmet2DB detected, " +
+                "overwriting!")
+            download_bacmet2_database()
+        } else {
+            println(
+                "WARNING: Contents of $params.bacmet2DB detected " +
+                "but overwrite set to $params.overwrite, skipping" )
+        }
+    }
+}
+
 workflow {
 
     // Has user specified that the CARD database be downloaded?
@@ -425,6 +483,9 @@ workflow {
     }
     if (DL_phast){
         download_PHASTER_WF()
+    }
+    if (DL_bacmet2){
+        download_BACMET2_WF()
     }
 }
 
