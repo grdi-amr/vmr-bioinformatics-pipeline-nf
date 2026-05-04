@@ -799,7 +799,10 @@ workflow {
     .filter { it != null }
     kleborate_input = PROKKA_RESULTS.genome
     .join(run_kleborate_flag)
-    kleborate_input.view()
+    .map { sample, genome, _, flag -> tuple(sample, genome, flag) }
+    //kleborate_input = PROKKA_RESULTS.genome
+    //.join(run_kleborate_flag)
+    //kleborate_input.view()
     KLEBORATE_RESULTS = run_kleborate(kleborate_input)
     run_ectyper_flag = MASHER_RESULTS.flag
     .map { sample, flag_file ->
@@ -809,6 +812,9 @@ workflow {
     .filter { it != null }
     ectyper_input = PROKKA_RESULTS.genome
     .join(run_ectyper_flag)
+    .map { sample, genome, _, flag -> tuple(sample, genome, flag) }
+    //ectyper_input = PROKKA_RESULTS.genome
+    //.join(run_ectyper_flag)
     ECTYPER_RESULTS = run_ectyper(ectyper_input)
     run_salmonella_flag = MASHER_RESULTS.flag
     .map { sample, flag_file ->
@@ -818,6 +824,9 @@ workflow {
     .filter { it != null }
     salmonella_input = PROKKA_RESULTS.genome
     .join(run_salmonella_flag)
+    .map { sample, genome, _, flag -> tuple(sample, genome, flag) }
+    //salmonella_input = PROKKA_RESULTS.genome
+    //.join(run_salmonella_flag)
     SISTR_RESULTS = run_sistr(salmonella_input)
     run_vfinder_flag = MASHER_RESULTS.flag
     .map { sample, flag_file ->
