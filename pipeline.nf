@@ -79,7 +79,7 @@ def helpMessage() {
 
 process runStarAMR {
     label "STARAMR"
-    publishDir "${params.outDir}/$sample/STARAMR"
+    publishDir { "${params.outDir}/$sample/STARAMR" }
 
     input:
     tuple val(sample), path(contigs)
@@ -117,7 +117,7 @@ process runStarAMR {
 process run_ectyper {
     label "ECTYPER"
     errorStrategy 'ignore'
-    publishDir "${params.outDir}/$sample/ECTYPER"
+    publishDir { "${params.outDir}/$sample/ECTYPER" }
 
     input:
     tuple val(sample), path(contigs), val(flag)
@@ -138,7 +138,7 @@ process run_ectyper {
 }
 process run_kleborate {
     label "KLEBORATE"
-    publishDir "${params.outDir}/$sample/KLEBORATE"
+    publishDir { "${params.outDir}/$sample/KLEBORATE" }
 
     input:
     tuple val(sample), path(contigs), val(flag)
@@ -161,7 +161,7 @@ process run_kleborate {
 }
 process run_prokka{
     label "PROKKA"
-    publishDir "${params.outDir}/$sample/PROKKA"
+    publishDir { "${params.outDir}/$sample/PROKKA" }
     cpus params.num_threads
     
     input:
@@ -212,7 +212,7 @@ process run_prokka{
 }
 process run_refseq_masher{
     label "REFSEQ_MASHER"
-    publishDir "${params.outDir}/$sample/REFSEQ_MASHER"
+    publishDir { "${params.outDir}/$sample/REFSEQ_MASHER" }
     input:
     tuple val(sample), path(genome)
 
@@ -289,7 +289,7 @@ process run_refseq_masher{
 
 process run_sistr {
     label "SISTR"
-    publishDir "${params.outDir}/$sample/SISTR"
+    publishDir { "${params.outDir}/$sample/SISTR" }
 
     input:
     tuple val(sample), path(contigs), val(flag)
@@ -306,7 +306,7 @@ process run_sistr {
 }
 process run_abricate {
     label "ABRICATE"
-    publishDir "${params.outDir}/$sample/ABRICATE"
+    publishDir { "${params.outDir}/$sample/ABRICATE" }
 
     input:
     tuple val(sample), path(contigs)
@@ -331,7 +331,7 @@ process run_abricate {
 
 process run_virulencefinder {
     label "VFINDER"
-    publishDir "${params.outDir}/$sample/VIRULENCEFINDER"
+    publishDir { "${params.outDir}/$sample/VIRULENCEFINDER" }
 
     input:
     tuple val(sample), path(contigs), val(flag)
@@ -379,7 +379,7 @@ process load_RGI_database {
 process run_iceberg {
     label 'misc'
     label 'process_low'
-    publishDir "${params.outDir}/$sample/ICEBERG"
+    publishDir { "${params.outDir}/$sample/ICEBERG" }
     cpus params.num_threads
 
     input:
@@ -435,7 +435,7 @@ process run_iceberg {
 process run_phaster {
     label 'misc'
     label 'process_low'
-    publishDir "${params.outDir}/$sample/PHASTER"
+    publishDir { "${params.outDir}/$sample/PHASTER" }
     cpus params.num_threads
 
     input:
@@ -468,7 +468,7 @@ process run_phaster {
 
 process run_integron_finder{
     label "INTEGRON_FINDER"
-    publishDir "${params.outDir}/$sample/INTEGRON_FINDER"
+    publishDir { "${params.outDir}/$sample/INTEGRON_FINDER" }
     cpus params.num_threads
 
     input:
@@ -516,7 +516,7 @@ process run_integron_finder{
 }
 process run_island_path{
     label "ISLANDPATH"
-    publishDir "${params.outDir}/$sample/ISLAND_PATH"
+    publishDir { "${params.outDir}/$sample/ISLAND_PATH" }
     cpus params.num_threads
 
     input:
@@ -552,7 +552,7 @@ process run_island_path{
 process run_digis{
     label 'misc'
     label 'process_low'
-    publishDir "${params.outDir}/$sample/DIGIS"
+    publishDir { "${params.outDir}/$sample/DIGIS" }
     cpus params.num_threads
     
     input:
@@ -608,7 +608,7 @@ process run_digis{
 }
 process run_RGI { 
     label "RGI"
-    publishDir "${params.outDir}/$sample/RGI"
+    publishDir { "${params.outDir}/$sample/RGI" }
     cpus params.num_threads
 
     input:
@@ -656,7 +656,7 @@ process concatenate_plasmid_seqs {
 
 process run_mobSuite {
     label "MOB"
-    publishDir "${params.outDir}/$sample"
+    publishDir { "${params.outDir}/$sample" }
     cpus params.num_threads
 
     input: 
@@ -726,7 +726,7 @@ process run_mobSuite {
 
 process merge_tables {
     label "RGI"
-    publishDir "${params.outDir}/$sample/Merge"
+    publishDir { "${params.outDir}/$sample/Merge" }
     cache false
 
     input:
