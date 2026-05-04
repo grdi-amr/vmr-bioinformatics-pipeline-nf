@@ -129,7 +129,8 @@ process download_MOB_database {
 }
 
 process download_prokka_database {
-    label = ['db_download','process_low']
+    label 'db_download'
+    label 'process_low'
     publishDir params.prokkaDB, mode: 'move', overwrite: true
 
     output:
@@ -149,7 +150,8 @@ process download_prokka_database {
     """
 }
 process download_phaster_database {
-    label = ['db_download','process_low']
+    label 'db_download'
+    label 'process_low'
     publishDir params.phaster, mode: 'move', overwrite: true
 
     output:
@@ -173,7 +175,8 @@ process download_phaster_database {
     """
 }
 process download_iceberg_database {
-    label = ['db_download','process_low']
+    label 'db_download'
+    label 'process_low'
     publishDir params.iceberg, mode: 'move', overwrite: true
 
     output:
