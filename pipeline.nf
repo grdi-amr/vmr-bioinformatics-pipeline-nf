@@ -139,6 +139,7 @@ process runStarAMR {
 }
 process run_ectyper {
     label "ECTYPER"
+    errorStrategy 'ignore'
     publishDir "${params.outDir}/$sample/ECTYPER"
 
     input:
@@ -148,7 +149,8 @@ process run_ectyper {
     script:
     """
     mkdir temp_db
-    ectyper -i $contigs --pathotype  -o out
+    cp ${contigs} ${sample}.fna
+    ectyper -i ${sample}.fna --pathotype  -o out
     """
     stub:
     """
@@ -402,7 +404,8 @@ process load_RGI_database {
 }
 
 process run_iceberg {
-    label = [ 'misc', 'process_low' ]
+    label 'misc'
+    label 'process_low'
     publishDir "${params.outDir}/$sample/ICEBERG"
     cpus params.num_threads
 
@@ -458,7 +461,8 @@ process run_iceberg {
 
 }
 process run_phaster {
-    label = [ 'misc', 'process_low' ]
+    label 'misc'
+    label 'process_low'
     publishDir "${params.outDir}/$sample/PHASTER"
     cpus params.num_threads
 
@@ -574,7 +578,8 @@ process run_island_path{
 
 }
 process run_digis{
-    label = [ 'misc', 'process_low' ]
+    label 'misc'
+    label 'process_low'
     publishDir "${params.outDir}/$sample/DIGIS"
     cpus params.num_threads
     
