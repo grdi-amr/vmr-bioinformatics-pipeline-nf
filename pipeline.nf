@@ -383,8 +383,7 @@ process run_iceberg {
     cpus params.num_threads
 
     input:
-    tuple val(sample), file(genes_aa)
-    tuple val(sample), file (genome)
+    tuple val(sample), path(genes_aa), path(genome)
     output:
     tuple val(sample), path("${sample}_iceberg_blastp_onGenes.summary.txt") , emit: genes_summary
     tuple val(sample), path("${sample}_iceberg_blastp_onGenes.txt")         , emit: results
@@ -440,7 +439,7 @@ process run_phaster {
     cpus params.num_threads
 
     input:
-    tuple val(sample), file(genes_aa)
+    tuple val(sample), path(genes_aa)
 
     output:
     tuple val(sample), path("${sample}_phaster_blastp_onGenes.summary.txt"), emit: genes_summary
@@ -473,7 +472,7 @@ process run_integron_finder{
     cpus params.num_threads
 
     input:
-    tuple val(sample), file(genome)
+    tuple val(sample), path(genome)
 
     output:
     tuple val(sample), path("*")                      , emit: all
@@ -521,7 +520,7 @@ process run_island_path{
     cpus params.num_threads
 
     input:
-    tuple val(sample), file("annotation.gbk")
+    tuple val(sample), path("annotation.gbk")
 
     output:
     tuple val(sample), path("${sample}_predicted_GIs.bed"), emit: results
@@ -848,7 +847,7 @@ workflow {
        VFINDER_RESULTS = run_virulencefinder(PROKKA_RESULTS.genome)
     }
     //Run Iceberg
-    ICEBERG_RESULTS = run_iceberg(PROKKA_RESULTS.proteins, PROKKA_RESULTS.genome)
+    ICEBERG_RESULTS = run_iceberg(PROKKA_RESULTS.proteins.join(PROKKA_RESULTS.genome))
     // Run Phaster (prophage/phage protein BLAST)
     PHASTER_RESULTS = run_phaster(PROKKA_RESULTS.proteins)
     INTEGRON_FINDER_RESULTS =run_integron_finder(PROKKA_RESULTS.genome)
