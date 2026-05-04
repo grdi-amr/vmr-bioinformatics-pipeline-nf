@@ -19,58 +19,6 @@ params.download_bacmet2 = false
 params.download_all = false
 params.overwrite = false
 
-// Set a flag to donwload the mob database based on input paramters
-if ( params.download_all | params.download_mobDB ){
-    DL_mob = true 
-} else { 
-    DL_mob = false
-}
-
-// Set a flag to donwload the card json based on input paramters
-if ( params.download_all | params.download_card_json ){
-    DL_card = true 
-} else { 
-    DL_card = false
-}
-// Set a flag to donwload the virulencefinder db based on input paramters
-if ( params.download_all | params.download_vfDB ){
-    DL_vfdb = true
-} else {
-    DL_vfdb = false
-}
-if ( params.download_all | params.download_prokkaDB ){
-    DL_prokka = true
-} else {
-    DL_prokka = false
-}
-if ( params.download_all | params.download_iceberg ){
-    DL_iceberg = true
-} else {
-    DL_iceberg = false
-}
-if ( params.download_all | params.download_phaster ){
-    DL_phast = true
-} else {
-    DL_phast = false
-}
-if ( params.download_all | params.download_bacmet2 ){
-    DL_bacmet2 = true
-} else {
-    DL_bacmet2 = false
-}
-// Log message
-log.info """ 
-
-    Download Databases
-    -------------------
-    MOB-suite databases: ${DL_mob}
-    CARD json: ${DL_card}
-    Virulencefinder database: ${DL_vfdb}
-    Prokka database: ${DL_prokka}
-    Iceberg database: ${DL_iceberg}
-    Phaster database: ${DL_phast}
-    BacMet2 abricate databases: ${DL_bacmet2}
-""".stripIndent(true)
 
 
 process download_CARD_json {
@@ -455,28 +403,45 @@ workflow download_BACMET2_WF {
 
 workflow {
 
-    // Has user specified that the CARD database be downloaded?
+    def DL_mob     = params.download_all || params.download_mobDB
+    def DL_card    = params.download_all || params.download_card_json
+    def DL_vfdb    = params.download_all || params.download_vfDB
+    def DL_prokka  = params.download_all || params.download_prokkaDB
+    def DL_iceberg = params.download_all || params.download_iceberg
+    def DL_phast   = params.download_all || params.download_phaster
+    def DL_bacmet2 = params.download_all || params.download_bacmet2
+
+    log.info """
+    Download Databases
+    -------------------
+    MOB-suite databases: ${DL_mob}
+    CARD json: ${DL_card}
+    Virulencefinder database: ${DL_vfdb}
+    Prokka database: ${DL_prokka}
+    Iceberg database: ${DL_iceberg}
+    Phaster database: ${DL_phast}
+    BacMet2 abricate databases: ${DL_bacmet2}
+    """.stripIndent(true)
+
     if ( DL_card ){
         download_CARD_WF()
     }
-    // Has use specifed that the MOB database be downloaded?
     if ( DL_mob ){
         download_MOB_WF()
     }
-    // Has use specifed that the MOB database be downloaded?
     if ( DL_vfdb ){
         download_VF_WF()
     }
-    if ( DL_prokka){
+    if ( DL_prokka ){
         download_PROKKA_WF()
     }
-    if (DL_iceberg){
+    if ( DL_iceberg ){
         download_ICEBERG_WF()
     }
-    if (DL_phast){
+    if ( DL_phast ){
         download_PHASTER_WF()
     }
-    if (DL_bacmet2){
+    if ( DL_bacmet2 ){
         download_BACMET2_WF()
     }
 }
