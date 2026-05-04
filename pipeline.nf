@@ -72,29 +72,6 @@ def helpMessage() {
     """.stripIndent(true)
 }
 
-if (params.help) { 
-    helpMessage() 
-    exit 0
-}
-
-
-// Log
-log.info """\
-    Mob-Suite RGI pipeline
-    ===================================
-    Profile     : ${workflow.profile}
-    Contigs     : ${params.contigs}
-    Species     : ${params.species}
-    Sistr       : ${params.sistr}
-    Ectyper     : ${params.ectyper}
-    mobDB       : ${params.mobDB}
-    vfDB        : ${params.virulencefinderDB}
-    card.json   : ${params.card_json}
-    outDir      : ${params.outDir} 
-   
-    PlasmidsOnly? ${params.plasmids_only}
-    """
-   .stripIndent(true)
 
 // Note: what happens if these files are not generated?, e.g., with
 // optional flag?
@@ -773,6 +750,27 @@ process merge_tables {
 }
 
 workflow {
+    if (params.help) {
+        helpMessage()
+        exit 0
+    }
+
+    log.info """\
+        Mob-Suite RGI pipeline
+        ===================================
+        Profile     : ${workflow.profile}
+        Contigs     : ${params.contigs}
+        Species     : ${params.species}
+        Sistr       : ${params.sistr}
+        Ectyper     : ${params.ectyper}
+        mobDB       : ${params.mobDB}
+        vfDB        : ${params.virulencefinderDB}
+        card.json   : ${params.card_json}
+        outDir      : ${params.outDir}
+
+        PlasmidsOnly? ${params.plasmids_only}
+        """.stripIndent(true)
+
     def ECTYPER_RESULTS = Channel.empty()
     def SISTR_RESULTS = Channel.empty()
     def KLEBORATE_RESULTS = Channel.empty()
