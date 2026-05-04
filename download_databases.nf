@@ -77,8 +77,6 @@ process download_CARD_json {
     label "RGI"
     publishDir params.card_json, mode: 'move', overwrite: true
 
-    input: 
-
     output:
     stdout emit: stdout
     path 'card.json', emit: json
@@ -98,7 +96,6 @@ process download_CARD_json {
 process download_virulencefinder_database {
 
     publishDir params.card_json, mode: 'move', overwrite: true
-    input:
 
     output:
     path "virulencefinder_db/*"
@@ -118,9 +115,7 @@ process download_MOB_database {
     label "MOB"
     publishDir params.mobDB, mode: 'move', overwrite: true
 
-    input:
-
-    output: 
+    output:
     path "*"
 
     script:
@@ -136,8 +131,6 @@ process download_MOB_database {
 process download_prokka_database {
     label = ['db_download','process_low']
     publishDir params.prokkaDB, mode: 'move', overwrite: true
-
-    input:
 
     output:
     file "*"
@@ -158,8 +151,6 @@ process download_prokka_database {
 process download_phaster_database {
     label = ['db_download','process_low']
     publishDir params.phaster, mode: 'move', overwrite: true
-
-    input:
 
     output:
     file "*"
@@ -184,8 +175,6 @@ process download_phaster_database {
 process download_iceberg_database {
     label = ['db_download','process_low']
     publishDir params.iceberg, mode: 'move', overwrite: true
-
-    input:
 
     output:
     file "*"
