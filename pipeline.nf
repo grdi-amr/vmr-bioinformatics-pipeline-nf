@@ -1,7 +1,7 @@
 manifest {
     name        = 'vmr-pipeline'
     description = 'Plasmid-AMR characterization pipeline for GRDI-AMR2 data'
-    author      = 'GRDI-AMR2'
+    author      = 'Gabriel Wajnberg <gabriel.wajnberg@inspection.gc.ca>'
     version     = '1.0.0'
     nextflowVersion = '>=22.0.0'
 }
