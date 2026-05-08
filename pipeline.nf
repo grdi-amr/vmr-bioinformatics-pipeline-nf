@@ -1,3 +1,11 @@
+manifest {
+    name        = 'vmr-pipeline'
+    description = 'Plasmid-AMR characterization pipeline for GRDI-AMR2 data'
+    author      = 'GRDI-AMR2'
+    version     = '1.0.0'
+    nextflowVersion = '>=22.0.0'
+}
+
 // Pipeline input parameters
 params.contigs = ""
 
@@ -790,13 +798,15 @@ workflow {
     }
 
     log.info """\
-        Mob-Suite RGI pipeline
+        ${manifest.name} v${manifest.version}
         ===================================
         Profile     : ${workflow.profile}
         Contigs     : ${params.contigs}
         Species     : ${params.species}
-        Sistr       : ${params.sistr}
-        Ectyper     : ${params.ectyper}
+        Sistr       : ${params.sistr_dir ?: params.sistr}
+        Ectyper     : ${params.ectyper_dir ?: params.ectyper}
+        Kleborate   : ${params.kleborate_dir ?: 'auto'}
+        StarAMR     : ${params.staramr_dir ?: 'run'}
         mobDB       : ${params.mobDB}
         vfDB        : ${params.virulencefinderDB}
         card.json   : ${params.card_json}
