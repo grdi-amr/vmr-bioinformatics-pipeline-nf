@@ -1,11 +1,3 @@
-manifest {
-    name        = 'vmr-pipeline'
-    description = 'Plasmid-AMR characterization pipeline for GRDI-AMR2 data'
-    author      = 'Gabriel Wajnberg <gabriel.wajnberg@inspection.gc.ca>'
-    version     = '1.0.0'
-    nextflowVersion = '>=22.0.0'
-}
-
 // Pipeline input parameters
 params.contigs = ""
 
@@ -798,7 +790,7 @@ workflow {
     }
 
     log.info """\
-        ${manifest.name} v${manifest.version}
+        vmr-pipeline v1.0.0
         ===================================
         Profile     : ${workflow.profile}
         Contigs     : ${params.contigs}
