@@ -37,6 +37,18 @@ params.vfinder = ""
 // Parameters to accept mikrokondo mobsuite
 params.mob_recon_dir = ""
 params.mob_suffix = "contig_report.mob.recon.annotation.filled.txt"
+// Parameters to accept mikrokondo ectyper results
+params.ectyper_dir = ""
+params.ectyper_suffix = "output.ectyper.subtyping.tsv"
+// Parameters to accept mikrokondo sistr results
+params.sistr_dir = ""
+params.sistr_suffix = "sistr.subtyping.tab"
+// Parameters to accept mikrokondo kleborate results
+params.kleborate_dir = ""
+params.kleborate_suffix = "kleborate.results.subtyping.txt"
+// Parameters to accept mikrokondo staramr results
+params.staramr_dir = ""
+params.staramr_suffix = "detailed_summary.staramr.annotation.tsv"
 // Help
 params.help = false
 
@@ -64,10 +76,33 @@ def helpMessage() {
           --ectyper         if used it will  serotype E.coly .Default=false 
           --sistr           if used it will serotype Salmonella.If used make sure to 
                             use parameter 'species'. Default=false
-          --vfinder         Use one or more of vfinder available databases: listeria, 
-                            s.aureus_exoenzyme, s.aureus_hostimm, s.aureus_toxin, 
+          --vfinder         Use one or more of vfinder available databases: listeria,
+                            s.aureus_exoenzyme, s.aureus_hostimm, s.aureus_toxin,
                             stx, virulence_ecoli, virulence_ent, virulence_entfm.
-          
+          --mob_recon_dir   PATH to directory of pre-computed MOB-suite results
+                            (e.g. from mikrokondo). Skips running mob_recon.
+          --mob_suffix      File suffix for MOB-suite contig reports.
+                            Default: contig_report.mob.recon.annotation.filled.txt
+          --ectyper_dir     PATH to directory of pre-computed ECTyper results
+                            (e.g. from mikrokondo). Skips running ectyper.
+                            Expected layout: <ectyper_dir>/<sample>/<sample>.<ectyper_suffix>
+          --ectyper_suffix  File suffix for ECTyper output files.
+                            Default: output.ectyper.subtyping.tsv
+          --sistr_dir       PATH to directory of pre-computed SISTR results
+                            (e.g. from mikrokondo). Skips running sistr.
+                            Expected layout: <sistr_dir>/<sample>.<sistr_suffix>
+          --sistr_suffix    File suffix for SISTR output files.
+                            Default: sistr.subtyping.tab
+          --kleborate_dir   PATH to directory of pre-computed Kleborate results
+                            (e.g. from mikrokondo). Skips running kleborate.
+                            Expected layout: <kleborate_dir>/<sample>.<kleborate_suffix>
+          --kleborate_suffix File suffix for Kleborate output files.
+                            Default: kleborate.results.subtyping.txt
+          --staramr_dir     PATH to directory of pre-computed StarAMR results
+                            (e.g. from mikrokondo). Skips running staramr.
+                            Expected layout: <staramr_dir>/<sample>/<sample>.<staramr_suffix>
+          --staramr_suffix  File suffix (anchor) for StarAMR detailed summary files.
+                            Default: detailed_summary.staramr.annotation.tsv
 
     """.stripIndent(true)
 }
@@ -789,36 +824,87 @@ workflow {
     //kleborate_flag_ch.view { println "kleborate_flag_ch: $it" }
     //KLEBORATE_RUN = SPECIE.kleborate_flag_ch.filter { it == 'kpsc' || it == 'kosc' }
     // Run kleborate only if the flag says so
-    run_kleborate_flag = MASHER_RESULTS.flag
-    .map { sample, flag_file -> 
-        def flag = flag_file.text.trim()
-        //def valid = (flag == 'kpsc' || flag == 'kosc') ? flag : false
-        //tuple(sample, valid)
-        (flag == 'kpsc' || flag == 'kosc') ? tuple(sample, flag) : null
-    }
-    .filter { it != null }
-    kleborate_input = PROKKA_RESULTS.genome
-    .join(run_kleborate_flag)
-    kleborate_input.view()
-    KLEBORATE_RESULTS = run_kleborate(kleborate_input)
-    run_ectyper_flag = MASHER_RESULTS.flag
-    .map { sample, flag_file ->
-        def flag = flag_file.text.trim()
-        (flag == 'virulence_ecoli') ? tuple(sample, flag) : null
-    }
-    .filter { it != null }
-    ectyper_input = PROKKA_RESULTS.genome
-    .join(run_ectyper_flag)
-    ECTYPER_RESULTS = run_ectyper(ectyper_input)
-    run_salmonella_flag = MASHER_RESULTS.flag
-    .map { sample, flag_file ->
-        def flag = flag_file.text.trim()
-        (flag == 'Salmonella enterica' || flag == 'Salmonella bongori') ? tuple(sample, flag) : null
-    }
-    .filter { it != null }
-    salmonella_input = PROKKA_RESULTS.genome
-    .join(run_salmonella_flag)
-    SISTR_RESULTS = run_sistr(salmonella_input)
+    if (params.kleborate_dir) {
+
+        log.info "Using external Kleborate results from: ${params.kleborate_dir}"
+
+        KLEBORATE_RESULTS = Channel
+            .fromPath("${params.kleborate_dir}/*.${params.kleborate_suffix}")
+            .filter { it.exists() }
+            .map { file ->
+                def sample = file.name.replace(".${params.kleborate_suffix}", '')
+                tuple(sample, file)
+            }
+
+    } else {
+
+        run_kleborate_flag = MASHER_RESULTS.flag
+        .map { sample, flag_file ->
+            def flag = flag_file.text.trim()
+            (flag == 'kpsc' || flag == 'kosc') ? tuple(sample, flag) : null
+        }
+        .filter { it != null }
+        kleborate_input = PROKKA_RESULTS.genome
+        .join(run_kleborate_flag)
+        kleborate_input.view()
+        KLEBORATE_RESULTS = run_kleborate(kleborate_input)
+
+    } // end kleborate_dir else
+    if (params.ectyper_dir) {
+
+        log.info "Using external ECTyper results from: ${params.ectyper_dir}"
+
+        ECTYPER_RESULTS = Channel
+            .fromPath("${params.ectyper_dir}/*/*${params.ectyper_suffix}")
+            .filter { it.exists() }
+            .map { file ->
+                def sample = file.parent.name
+                tuple(sample, file)
+            }
+
+    } else {
+
+        run_ectyper_flag = MASHER_RESULTS.flag
+        .map { sample, flag_file ->
+            def flag = flag_file.text.trim()
+            (flag == 'virulence_ecoli') ? tuple(sample, flag) : null
+        }
+        .filter { it != null }
+        ectyper_input = PROKKA_RESULTS.genome
+        .join(run_ectyper_flag)
+        ECTYPER_RESULTS = run_ectyper(ectyper_input)
+
+        if (params.ectyper == true) {
+            ECTYPER_RESULTS = run_ectyper(PROKKA_RESULTS.genome)
+        }
+
+    } // end ectyper_dir else
+
+    if (params.sistr_dir) {
+
+        log.info "Using external SISTR results from: ${params.sistr_dir}"
+
+        SISTR_RESULTS = Channel
+            .fromPath("${params.sistr_dir}/*.${params.sistr_suffix}")
+            .filter { it.exists() }
+            .map { file ->
+                def sample = file.name.replace(".${params.sistr_suffix}", '')
+                tuple(sample, file)
+            }
+
+    } else {
+
+        run_salmonella_flag = MASHER_RESULTS.flag
+        .map { sample, flag_file ->
+            def flag = flag_file.text.trim()
+            (flag == 'Salmonella enterica' || flag == 'Salmonella bongori') ? tuple(sample, flag) : null
+        }
+        .filter { it != null }
+        salmonella_input = PROKKA_RESULTS.genome
+        .join(run_salmonella_flag)
+        SISTR_RESULTS = run_sistr(salmonella_input)
+
+    } // end sistr_dir else
     run_vfinder_flag = MASHER_RESULTS.flag
     .map { sample, flag_file ->
         def flag = flag_file.text.trim()
@@ -827,11 +913,8 @@ workflow {
     .filter { it != null }
     vfinder_input = PROKKA_RESULTS.genome
     .join(run_vfinder_flag)
-   vfinder_input.view() 
-   VFINDER_RESULTS = run_virulencefinder(vfinder_input) 
-   if ( params.ectyper == true) {
-       ECTYPER_RESULTS = run_ectyper(PROKKA_RESULTS.genome)
-    }
+    vfinder_input.view()
+    VFINDER_RESULTS = run_virulencefinder(vfinder_input)
        
     if (params.test) {
     log.info "Test mode enabled. Exiting pipeline early for CI testing."
@@ -902,7 +985,21 @@ workflow {
 
     //MOB_RESULTS = run_mobSuite(PROKKA_RESULTS.genome)
     // Run star_amr
-    STARAMR_RESULTS=runStarAMR(PROKKA_RESULTS.genome)
+    if (params.staramr_dir) {
+
+        log.info "Using external StarAMR results from: ${params.staramr_dir}"
+
+        STARAMR_RESULTS = Channel
+            .fromPath("${params.staramr_dir}/*/*${params.staramr_suffix}")
+            .filter { it.exists() }
+            .map { file ->
+                def sample = file.parent.name
+                tuple(sample, file)
+            }
+
+    } else {
+        STARAMR_RESULTS = runStarAMR(PROKKA_RESULTS.genome)
+    }
     // Run Abricate
     ABRICATE_RESULTS=run_abricate(PROKKA_RESULTS.genome)	    
     // Get the CARD Json

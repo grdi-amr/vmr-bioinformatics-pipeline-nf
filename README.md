@@ -150,6 +150,83 @@ nextflow run pipeline.nf \
 
 The pipeline expects the directory structure `<mob_recon_dir>/<sample_name>/*<mob_suffix>`.
 
+#### Using pre-computed ECTyper results (Mikrokondo integration)
+
+If ECTyper was already run externally (e.g. via the Mikrokondo pipeline), you can
+skip the internal ECTyper step and point the pipeline to the existing results:
+
+```bash
+nextflow run pipeline.nf \
+    -profile [conda|docker|singularity] \
+    --contigs "dir/to/sequences/*.fasta" \
+    --ectyper_dir "/path/to/mikrokondo/Assembly/Subtyping/ECTyper"
+```
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--ectyper_dir` | Path to directory containing per-sample ECTyper output folders | `""` (runs ECTyper internally) |
+| `--ectyper_suffix` | Filename suffix of the ECTyper output file inside each sample folder | `"output.ectyper.subtyping.tsv"` |
+
+The pipeline expects the directory structure `<ectyper_dir>/<sample_name>/<sample_name>.<ectyper_suffix>`.
+When `--ectyper_dir` is set, neither the automatic *E. coli* detection path nor `--ectyper true` will launch the ECTyper process.
+
+#### Using pre-computed SISTR results (Mikrokondo integration)
+
+If SISTR was already run externally (e.g. via the Mikrokondo pipeline), you can
+skip the internal SISTR step and point the pipeline to the existing results:
+
+```bash
+nextflow run pipeline.nf \
+    -profile [conda|docker|singularity] \
+    --contigs "dir/to/sequences/*.fasta" \
+    --sistr_dir "/path/to/mikrokondo/Assembly/Subtyping/SISTR"
+```
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--sistr_dir` | Path to directory containing flat SISTR output files | `""` (runs SISTR internally) |
+| `--sistr_suffix` | Filename suffix of the SISTR output file | `"sistr.subtyping.tab"` |
+
+The pipeline expects a flat layout: `<sistr_dir>/<sample_name>.<sistr_suffix>`.
+
+#### Using pre-computed Kleborate results (Mikrokondo integration)
+
+If Kleborate was already run externally (e.g. via the Mikrokondo pipeline), you can
+skip the internal Kleborate step and point the pipeline to the existing results:
+
+```bash
+nextflow run pipeline.nf \
+    -profile [conda|docker|singularity] \
+    --contigs "dir/to/sequences/*.fasta" \
+    --kleborate_dir "/path/to/mikrokondo/Assembly/Subtyping/Kleborate"
+```
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--kleborate_dir` | Path to directory containing flat Kleborate output files | `""` (runs Kleborate internally) |
+| `--kleborate_suffix` | Filename suffix of the Kleborate output file | `"kleborate.results.subtyping.txt"` |
+
+The pipeline expects a flat layout: `<kleborate_dir>/<sample_name>.<kleborate_suffix>`.
+
+#### Using pre-computed StarAMR results (Mikrokondo integration)
+
+If StarAMR was already run externally (e.g. via the Mikrokondo pipeline), you can
+skip the internal StarAMR step and point the pipeline to the existing results:
+
+```bash
+nextflow run pipeline.nf \
+    -profile [conda|docker|singularity] \
+    --contigs "dir/to/sequences/*.fasta" \
+    --staramr_dir "/path/to/mikrokondo/Assembly/Annotation/StarAMR"
+```
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--staramr_dir` | Path to directory containing per-sample StarAMR output folders | `""` (runs StarAMR internally) |
+| `--staramr_suffix` | Filename suffix used to locate the detailed summary file in each sample folder | `"detailed_summary.staramr.annotation.tsv"` |
+
+The pipeline expects the directory structure `<staramr_dir>/<sample_name>/<sample_name>.<staramr_suffix>`.
+
 #### VirulenceFinder database options
 
 Pass one or more database names (space-separated, quoted) to `--vfinder`:
